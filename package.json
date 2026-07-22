@@ -1,5 +1,5 @@
 {
-  "name": "hexo-gui",
+  "name": "hexo-cms",
   "version": "1.0.0",
   "description": "Zero-CLI Web CMS for Hexo Static Blogs (Geist / Vercel Design System)",
   "main": "dist/server/index.js",

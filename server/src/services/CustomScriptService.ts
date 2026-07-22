@@ -44,32 +44,33 @@ export class CustomScriptService {
     const manifest = this.readManifest(blogDir);
     const result: ScriptFileItem[] = [];
 
-    (['css', 'js'] as const).forEach((type) => {
+    const readFilesForType = (type: 'css' | 'js') => {
       const dir = this.getCustomDir(blogDir, type);
-      if (fs.existsSync(dir)) {
-        const files = fs.readdirSync(dir);
-        files.forEach((file) => {
-          if (
-            (type === 'css' && file.endsWith('.css')) ||
-            (type === 'js' && file.endsWith('.js'))
-          ) {
-            const filePath = path.join(dir, file);
-            if (fs.statSync(filePath).isFile()) {
-              const content = fs.readFileSync(filePath, 'utf8');
-              const key = `${type}/${file}`;
-              const enabled = manifest[key] !== false;
-              result.push({
-                filename: file,
-                type,
-                content,
-                enabled,
-              });
-            }
-          }
-        });
+      if (!fs.existsSync(dir)) return;
+      const files = fs.readdirSync(dir);
+      for (const file of files) {
+        if (
+          (type === 'css' && file.endsWith('.css')) ||
+          (type === 'js' && file.endsWith('.js'))
+        ) {
+          const filePath = path.join(dir, file);
+          try {
+            const content = fs.readFileSync(filePath, 'utf8');
+            const key = `${type}/${file}`;
+            const enabled = manifest[key] !== false; // default true
+            result.push({
+              filename: file,
+              type,
+              content,
+              enabled,
+            });
+          } catch {}
+        }
       }
-    });
+    };
 
+    readFilesForType('css');
+    readFilesForType('js');
     return result;
   }
 
@@ -79,15 +80,11 @@ export class CustomScriptService {
     filename: string,
     content: string,
     enabled: boolean = true
-  ): boolean {
-    let cleanFilename = filename.trim();
-    const ext = `.${type}`;
-    if (!cleanFilename.endsWith(ext)) {
-      cleanFilename += ext;
-    }
-
+  ): void {
     const dir = this.getCustomDir(blogDir, type);
+    const cleanFilename = filename.endsWith(`.${type}`) ? filename : `${filename}.${type}`;
     const filePath = path.join(dir, cleanFilename);
+
     fs.writeFileSync(filePath, content, 'utf8');
 
     const manifest = this.readManifest(blogDir);
@@ -95,7 +92,6 @@ export class CustomScriptService {
     this.writeManifest(blogDir, manifest);
 
     this.ensureInjectorScript(blogDir);
-    return true;
   }
 
   renameCustomScript(
@@ -104,28 +100,21 @@ export class CustomScriptService {
     oldFilename: string,
     newFilename: string
   ): boolean {
-    let cleanNew = newFilename.trim();
-    const ext = `.${type}`;
-    if (!cleanNew.endsWith(ext)) {
-      cleanNew += ext;
-    }
-
-    if (oldFilename === cleanNew) return true;
-
     const dir = this.getCustomDir(blogDir, type);
-    const oldPath = path.join(dir, oldFilename);
+    const cleanOld = oldFilename.endsWith(`.${type}`) ? oldFilename : `${oldFilename}.${type}`;
+    const cleanNew = newFilename.endsWith(`.${type}`) ? newFilename : `${newFilename}.${type}`;
+
+    const oldPath = path.join(dir, cleanOld);
     const newPath = path.join(dir, cleanNew);
 
-    if (fs.existsSync(oldPath)) {
-      try {
-        fs.renameSync(oldPath, newPath);
-      } catch {}
-    }
+    if (!fs.existsSync(oldPath)) return false;
+
+    fs.renameSync(oldPath, newPath);
 
     const manifest = this.readManifest(blogDir);
-    const isEnabled = manifest[`${type}/${oldFilename}`] !== false;
-    delete manifest[`${type}/${oldFilename}`];
-    manifest[`${type}/${cleanNew}`] = isEnabled;
+    const wasEnabled = manifest[`${type}/${cleanOld}`] !== false;
+    delete manifest[`${type}/${cleanOld}`];
+    manifest[`${type}/${cleanNew}`] = wasEnabled;
     this.writeManifest(blogDir, manifest);
 
     this.ensureInjectorScript(blogDir);
@@ -134,16 +123,15 @@ export class CustomScriptService {
 
   deleteCustomScript(blogDir: string, type: 'css' | 'js', filename: string): boolean {
     const dir = this.getCustomDir(blogDir, type);
-    const filePath = path.join(dir, filename);
+    const cleanFilename = filename.endsWith(`.${type}`) ? filename : `${filename}.${type}`;
+    const filePath = path.join(dir, cleanFilename);
 
     if (fs.existsSync(filePath)) {
-      try {
-        fs.unlinkSync(filePath);
-      } catch {}
+      fs.unlinkSync(filePath);
     }
 
     const manifest = this.readManifest(blogDir);
-    delete manifest[`${type}/${filename}`];
+    delete manifest[`${type}/${cleanFilename}`];
     this.writeManifest(blogDir, manifest);
 
     this.ensureInjectorScript(blogDir);
@@ -165,8 +153,8 @@ export class CustomScriptService {
       fs.mkdirSync(scriptsDir, { recursive: true });
     }
 
-    const injectorPath = path.join(scriptsDir, 'hexo_gui_injector.js');
-    const injectorCode = `// Hexo Web GUI 自动导出的自定义 CSS & JS 原生注入器脚手架
+    const injectorPath = path.join(scriptsDir, 'hexo_cms_injector.js');
+    const injectorCode = `// Hexo CMS 自动导出的自定义 CSS & JS 原生注入器脚手架
 const fs = require('fs');
 const path = require('path');
 
@@ -192,7 +180,7 @@ hexo.extend.injector.register('head_end', () => {
       .filter((file) => manifest['css/' + file] !== false)
       .map((file) => {
         const code = fs.readFileSync(path.join(cssDir, file), 'utf8');
-        return \`<style data-source="hexo-gui-custom-css" data-filename="\${file}">\${code}</style>\`;
+        return \`<style data-source="hexo-cms-custom-css" data-filename="\${file}">\${code}</style>\`;
       })
       .join('\\n');
   } catch (e) {
@@ -212,7 +200,7 @@ hexo.extend.injector.register('body_end', () => {
       .filter((file) => manifest['js/' + file] !== false)
       .map((file) => {
         const code = fs.readFileSync(path.join(jsDir, file), 'utf8');
-        return \`<script data-source="hexo-gui-custom-js" data-filename="\${file}">\${code}</script>\`;
+        return \`<script data-source="hexo-cms-custom-js" data-filename="\${file}">\${code}</script>\`;
       })
       .join('\\n');
   } catch (e) {
