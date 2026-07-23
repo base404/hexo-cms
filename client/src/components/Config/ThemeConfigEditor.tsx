@@ -9,7 +9,6 @@ import {
   Sliders,
   MessageSquare,
   Code,
-  Check,
   RotateCcw,
   Sparkles,
   HelpCircle,
@@ -57,11 +56,11 @@ interface ThemeConfigEditorProps {
 }
 
 const ICON_MAP: Record<string, React.ReactNode> = {
-  globe: <Globe className="w-4 h-4 text-blue-500" />,
-  palette: <Palette className="w-4 h-4 text-purple-500" />,
-  sliders: <Sliders className="w-4 h-4 text-amber-500" />,
-  'message-square': <MessageSquare className="w-4 h-4 text-emerald-500" />,
-  code: <Code className="w-4 h-4 text-rose-500" />,
+  globe: <Globe className="w-4 h-4 text-zinc-700" />,
+  palette: <Palette className="w-4 h-4 text-zinc-700" />,
+  sliders: <Sliders className="w-4 h-4 text-zinc-700" />,
+  'message-square': <MessageSquare className="w-4 h-4 text-zinc-700" />,
+  code: <Code className="w-4 h-4 text-zinc-700" />,
 };
 
 export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
@@ -101,7 +100,6 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
         configData = data.config || {};
       }
 
-      // Fill defaults from schema if missing in configData
       const merged: Record<string, any> = { ...configData };
       if (schemaData?.groups) {
         schemaData.groups.forEach((g) => {
@@ -120,7 +118,6 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
     } finally {
       setLoading(false);
     }
-
   };
 
   const handleFieldChange = (fieldName: string, value: any) => {
@@ -148,7 +145,7 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
 
       if (res.ok) {
         showToast(
-          `主题《${themeName}》配置已成功持久化至 _config.${themeName}.yml！`,
+          `主题《${themeName}》配置已更新至 _config.${themeName}.yml`,
           'success',
           '配置保存成功'
         );
@@ -182,9 +179,9 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
               onChange={(e) => handleFieldChange(field.name, e.target.checked)}
               className="sr-only peer"
             />
-            <div className="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600"></div>
-            <span className="ml-2 text-xs text-zinc-600 font-mono">
-              {val ? '开启 (ON)' : '关闭 (OFF)'}
+            <div className="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#171717]"></div>
+            <span className="ml-2 text-xs text-zinc-600 font-mono tracking-tight">
+              {val ? 'ON' : 'OFF'}
             </span>
           </label>
         );
@@ -194,7 +191,7 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
           <select
             value={val !== undefined ? String(val) : ''}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            className="w-full bg-white border border-zinc-200 rounded-md px-3 py-1.5 text-xs outline-none focus:border-purple-600 font-mono shadow-2xs"
+            className="w-full bg-white border border-zinc-200 rounded-[6px] px-3 py-1.5 text-xs outline-none focus:border-[#0070F3] focus:ring-1 focus:ring-[#0070F3] font-mono shadow-2xs transition-colors"
           >
             {field.options?.map((opt) => (
               <option key={String(opt.value)} value={String(opt.value)}>
@@ -212,7 +209,7 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
             max={field.max}
             value={val !== undefined ? val : ''}
             onChange={(e) => handleFieldChange(field.name, Number(e.target.value))}
-            className="w-full bg-white border border-zinc-200 rounded-md px-3 py-1.5 text-xs outline-none focus:border-purple-600 font-mono shadow-2xs"
+            className="w-full bg-white border border-zinc-200 rounded-[6px] px-3 py-1.5 text-xs outline-none focus:border-[#0070F3] focus:ring-1 focus:ring-[#0070F3] font-mono shadow-2xs transition-colors"
           />
         );
 
@@ -223,14 +220,14 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
               type="color"
               value={val || '#000000'}
               onChange={(e) => handleFieldChange(field.name, e.target.value)}
-              className="w-8 h-8 rounded border border-zinc-200 cursor-pointer p-0.5"
+              className="w-8 h-8 rounded-[4px] border border-zinc-200 cursor-pointer p-0.5 bg-white"
             />
             <input
               type="text"
               value={val || ''}
               onChange={(e) => handleFieldChange(field.name, e.target.value)}
-              placeholder="#7952b3"
-              className="w-32 bg-white border border-zinc-200 rounded-md px-3 py-1.5 text-xs font-mono outline-none focus:border-purple-600"
+              placeholder="#000000"
+              className="w-32 bg-white border border-zinc-200 rounded-[6px] px-3 py-1.5 text-xs font-mono outline-none focus:border-[#0070F3] focus:ring-1 focus:ring-[#0070F3] transition-colors"
             />
           </div>
         );
@@ -241,7 +238,7 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
             value={val || ''}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             rows={3}
-            className="w-full bg-white border border-zinc-200 rounded-md p-2.5 text-xs font-sans outline-none focus:border-purple-600 resize-y"
+            className="w-full bg-white border border-zinc-200 rounded-[6px] p-2.5 text-xs font-sans outline-none focus:border-[#0070F3] focus:ring-1 focus:ring-[#0070F3] resize-y transition-colors"
           />
         );
 
@@ -251,8 +248,8 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
             value={val || ''}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             rows={4}
-            placeholder={`<!-- 输入 ${field.language || 'HTML/CSS'} 自定义代码 -->`}
-            className="w-full bg-zinc-950 text-zinc-100 border border-zinc-800 rounded-md p-3 text-xs font-mono outline-none focus:border-purple-500 leading-relaxed resize-y"
+            placeholder={`<!-- ${field.language || 'HTML/CSS'} 自定义代码 -->`}
+            className="w-full bg-[#171717] text-zinc-100 border border-zinc-800 rounded-[6px] p-3 text-xs font-mono outline-none focus:border-[#0070F3] focus:ring-1 focus:ring-[#0070F3] leading-relaxed resize-y"
           />
         );
 
@@ -264,7 +261,7 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
             value={val !== undefined ? val : ''}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             placeholder={field.default ? `默认: ${field.default}` : ''}
-            className="w-full bg-white border border-zinc-200 rounded-md px-3 py-1.5 text-xs outline-none focus:border-purple-600 font-sans shadow-2xs"
+            className="w-full bg-white border border-zinc-200 rounded-[6px] px-3 py-1.5 text-xs outline-none focus:border-[#0070F3] focus:ring-1 focus:ring-[#0070F3] font-sans shadow-2xs transition-colors"
           />
         );
     }
@@ -273,60 +270,60 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
   const displayName = schema?.meta?.display_name || themeName;
 
   return ReactDOM.createPortal(
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9999] flex items-center justify-center p-6">
-      <div className="w-full max-w-4xl h-[720px] bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden border border-zinc-200 animate-in zoom-in-95 duration-150">
-        {/* Header Modal Bar */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 bg-zinc-50">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-[9999] flex items-center justify-center p-6 animate-in fade-in duration-150">
+      <div className="w-full max-w-4xl h-[720px] bg-white rounded-[8px] shadow-2xl flex flex-col overflow-hidden border border-zinc-200">
+        {/* Header Bar - Geist Minimalist */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 bg-[#FAFAFA]">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-sm">
-              <Sparkles className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-[6px] bg-[#171717] text-white flex items-center justify-center text-sm font-medium">
+              <Sparkles className="w-4 h-4 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-base text-zinc-900">
+                <h3 className="font-medium text-base text-[#171717] tracking-tight">
                   主题可视化配置 ({displayName})
                 </h3>
-                <span className="text-[10px] font-mono font-semibold px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-full">
+                <span className="label-caps text-[10px] font-mono font-medium px-2 py-0.5 bg-zinc-100 text-zinc-700 border border-zinc-200 rounded-[4px]">
                   _config.{themeName}.yml
                 </span>
               </div>
-              <p className="text-xs text-zinc-500 mt-0.5">
-                Hexo Theme Schema 标准驱动 • 无损解耦覆盖机制
+              <p className="text-xs text-zinc-500 mt-0.5 font-sans">
+                Hexo Theme Schema 标准驱动 • Geist / Vercel 设计规范
               </p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-zinc-900 p-1.5 rounded-md hover:bg-zinc-200 transition-colors"
+            className="text-zinc-400 hover:text-[#171717] p-1.5 rounded-[6px] hover:bg-zinc-200/60 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Content Body area */}
-        <div className="flex-1 p-6 overflow-y-auto space-y-6 bg-zinc-50/50">
+        {/* Content Body - White & Neutral Canvas */}
+        <div className="flex-1 p-6 overflow-y-auto space-y-5 bg-[#FAFAFA]">
           {loading ? (
             <div className="h-full flex items-center justify-center text-xs text-zinc-400 font-mono">
               加载 Schema 与配置解析中...
             </div>
           ) : !schema ? (
-            <div className="bg-amber-50 border border-amber-200 text-amber-900 p-6 rounded-lg space-y-2">
-              <div className="flex items-center gap-2 font-semibold text-sm">
-                <HelpCircle className="w-4 h-4 text-amber-600" />
+            <div className="bg-zinc-100 border border-zinc-300 text-zinc-800 p-6 rounded-[6px] space-y-2">
+              <div className="flex items-center gap-2 font-medium text-sm text-[#171717]">
+                <HelpCircle className="w-4 h-4 text-zinc-600" />
                 该主题未包含 theme-schema.yaml 标准声明
               </div>
-              <p className="text-xs text-amber-800 leading-relaxed">
-                当前主题 <code className="font-mono bg-amber-100 px-1 py-0.5 rounded">{themeName}</code> 暂未声明 Hexo Theme Schema 文件。你仍可通过系统配置页面编辑 <code className="font-mono bg-amber-100 px-1 py-0.5 rounded">_config.{themeName}.yml</code>。
+              <p className="text-xs text-zinc-600 leading-relaxed font-sans">
+                当前主题 <code className="font-mono bg-white px-1.5 py-0.5 rounded border border-zinc-200">{themeName}</code> 暂未声明 Hexo Theme Schema 文件。你仍可通过系统配置页面编辑 <code className="font-mono bg-white px-1.5 py-0.5 rounded border border-zinc-200">_config.{themeName}.yml</code>。
               </p>
             </div>
           ) : (
             schema.groups.map((group) => {
               const isCollapsed = collapsedGroups[group.id];
-              const groupIcon = ICON_MAP[group.icon || ''] || <Sliders className="w-4 h-4 text-purple-500" />;
+              const groupIcon = ICON_MAP[group.icon || ''] || <Sliders className="w-4 h-4 text-zinc-700" />;
 
               return (
-                <div key={group.id} className="geist-card p-5 bg-white border border-zinc-200 space-y-4">
+                <div key={group.id} className="bg-white border border-zinc-200 rounded-[6px] p-5 space-y-4 shadow-2xs">
                   {/* Group Header */}
                   <div
                     onClick={() => toggleGroupCollapse(group.id)}
@@ -334,18 +331,18 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
                   >
                     <div className="flex items-center gap-2">
                       {groupIcon}
-                      <h4 className="font-semibold text-sm text-zinc-900">{group.label}</h4>
-                      <span className="text-[10px] text-zinc-400 font-mono">
-                        ({group.fields.length} 项配置)
+                      <h4 className="font-medium text-sm text-[#171717] tracking-tight">{group.label}</h4>
+                      <span className="label-caps text-[10px] text-zinc-400 font-mono">
+                        ({group.fields.length} 项)
                       </span>
                     </div>
 
-                    <button className="text-zinc-400 hover:text-zinc-700">
+                    <button className="text-zinc-400 hover:text-[#171717]">
                       {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </button>
                   </div>
 
-                  {/* Group Fields Container */}
+                  {/* Group Fields */}
                   {!isCollapsed && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-1">
                       {group.fields.map((field) => {
@@ -366,7 +363,7 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
                             </div>
 
                             {field.description && (
-                              <p className="text-[11px] text-zinc-500">{field.description}</p>
+                              <p className="text-[11px] text-zinc-500 font-sans leading-normal">{field.description}</p>
                             )}
 
                             <div>{renderFieldInput(field)}</div>
@@ -381,25 +378,25 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
           )}
         </div>
 
-        {/* Footer Toolbar */}
+        {/* Footer Toolbar - Clean Action Bar */}
         <div className="flex items-center justify-between px-6 py-3.5 border-t border-zinc-200 bg-white">
           <span className="text-xs text-zinc-500 font-mono">
-            读取路径: <code className="bg-zinc-100 px-1 py-0.5 rounded">themes/{themeName}/theme-schema.yaml</code>
+            读取路径: <code className="bg-zinc-100 px-1.5 py-0.5 rounded-[4px] border border-zinc-200 text-zinc-700">themes/{themeName}/theme-schema.yaml</code>
           </span>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <button
               onClick={handleReset}
               disabled={loading || saving}
-              className="btn-secondary text-xs px-3.5 py-1.5 flex items-center gap-1 text-zinc-700"
+              className="bg-white border border-zinc-200 hover:bg-zinc-50 text-[#171717] text-xs px-3.5 py-1.5 rounded-[6px] font-medium transition-colors flex items-center gap-1"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
+              <RotateCcw className="w-3.5 h-3.5 text-zinc-500" />
               重置
             </button>
 
             <button
               onClick={onClose}
-              className="btn-secondary text-xs px-4 py-1.5"
+              className="bg-white border border-zinc-200 hover:bg-zinc-50 text-[#171717] text-xs px-4 py-1.5 rounded-[6px] font-medium transition-colors"
             >
               取消
             </button>
@@ -407,9 +404,9 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
             <button
               onClick={handleSave}
               disabled={loading || saving || !schema}
-              className="btn-primary-pill text-xs px-5 py-1.5 flex items-center gap-1.5 shadow-sm"
+              className="bg-[#171717] hover:bg-black text-white text-xs px-5 py-1.5 rounded-[6px] font-medium shadow-2xs transition-colors flex items-center gap-1.5 disabled:opacity-50"
             >
-              <Save className="w-3.5 h-3.5 text-emerald-400" />
+              <Save className="w-3.5 h-3.5" />
               {saving ? '正在保存...' : '保存主题配置'}
             </button>
           </div>
