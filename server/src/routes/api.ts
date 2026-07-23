@@ -654,7 +654,7 @@ apiRouter.post('/posts/delete', (req, res) => {
 // Taxonomy (Category & Tag) Manager Routes
 apiRouter.get('/taxonomy', (_req, res) => {
   try {
-    const blogDir = getBlogDir();
+    const blogDir = getActiveBlogDir();
     const result = TaxonomyService.getTaxonomies(blogDir);
     return res.json(result);
   } catch (e: any) {
@@ -668,7 +668,7 @@ apiRouter.post('/taxonomy/rename', (req, res) => {
     return res.status(400).json({ error: 'Missing required parameters (type, oldName, newName)' });
   }
   try {
-    const blogDir = getBlogDir();
+    const blogDir = getActiveBlogDir();
     const result = TaxonomyService.renameTaxonomy(blogDir, type, oldName, newName);
     return res.json({ success: true, ...result });
   } catch (e: any) {
@@ -682,11 +682,26 @@ apiRouter.post('/taxonomy/delete', (req, res) => {
     return res.status(400).json({ error: 'Missing required parameters (type, name)' });
   }
   try {
-    const blogDir = getBlogDir();
+    const blogDir = getActiveBlogDir();
     const result = TaxonomyService.deleteTaxonomy(blogDir, type, name);
     return res.json({ success: true, ...result });
   } catch (e: any) {
     return res.status(500).json({ error: e.message });
   }
 });
+
+apiRouter.post('/taxonomy/add', (req, res) => {
+  const { type, name } = req.body;
+  if (!type || !name) {
+    return res.status(400).json({ error: 'Missing required parameters (type, name)' });
+  }
+  try {
+    const blogDir = getActiveBlogDir();
+    const result = TaxonomyService.addCustomTaxonomy(blogDir, type, name);
+    return res.json({ success: true, ...result });
+  } catch (e: any) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
 
