@@ -249,17 +249,30 @@ export class ExtensionService {
     return { ...baseData, ...overrideData };
   }
 
+  private clearHexoCache(blogDir: string): void {
+    try {
+      const dbPath = path.join(blogDir, 'db.json');
+      if (fs.existsSync(dbPath)) {
+        fs.rmSync(dbPath, { force: true });
+      }
+      const publicDir = path.join(blogDir, 'public');
+      if (fs.existsSync(publicDir)) {
+        fs.rmSync(publicDir, { recursive: true, force: true });
+      }
+    } catch {}
+  }
+
   saveThemeConfig(blogDir: string, themeName: string, config: Record<string, any>): boolean {
     const overrideConfigPath = path.join(blogDir, `_config.${themeName}.yml`);
     try {
       const yamlString = stringify(config);
       fs.writeFileSync(overrideConfigPath, yamlString, 'utf8');
+      this.clearHexoCache(blogDir);
       return true;
     } catch {
       return false;
     }
   }
-
 
   activateTheme(blogDir: string, themeName: string): boolean {
     const configPath = path.join(blogDir, '_config.yml');
@@ -270,11 +283,13 @@ export class ExtensionService {
       const doc = parseDocument(raw);
       doc.set('theme', themeName);
       fs.writeFileSync(configPath, doc.toString(), 'utf8');
+      this.clearHexoCache(blogDir);
       return true;
     } catch {
       return false;
     }
   }
+
 
   installTheme(
     blogDir: string,
@@ -326,9 +341,11 @@ export class ExtensionService {
 
     try {
       fs.rmSync(themeDir, { recursive: true, force: true });
+      this.clearHexoCache(blogDir);
       return true;
     } catch {
       return false;
     }
   }
+
 }
