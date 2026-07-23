@@ -22,7 +22,7 @@ import {
 export interface ThemeSchemaField {
   name: string;
   label: string;
-  type: 'text' | 'textarea' | 'number' | 'switch' | 'select' | 'color' | 'code' | 'json' | 'array';
+  type: 'text' | 'textarea' | 'number' | 'switch' | 'select' | 'color' | 'code' | 'json' | 'array' | 'tags';
   description?: string;
   default?: any;
   options?: { value: any; label: string }[];
@@ -281,15 +281,90 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
           />
         );
 
+      case 'tags':
       case 'json':
       case 'array': {
-        const arr = Array.isArray(val) ? val : [];
+        const arr = Array.isArray(val)
+          ? val
+          : typeof val === 'string'
+          ? val.split(',').map((s) => s.trim()).filter(Boolean)
+          : [];
+        const isStringArray = field.type === 'tags' || (arr.length > 0 && typeof arr[0] === 'string');
+
+        if (isStringArray || (arr.length === 0 && field.type !== 'json')) {
+          const tagsList: string[] = arr.map(String);
+          return (
+            <div className="space-y-2 bg-zinc-50/80 p-3 border border-zinc-200 rounded-lg">
+              <div className="flex flex-wrap gap-1.5 min-h-[36px] p-2 bg-white border border-zinc-200 rounded-md shadow-2xs">
+                {tagsList.length === 0 ? (
+                  <span className="text-xs font-mono text-zinc-400 self-center px-1">暂无标签 (输入名称添加)</span>
+                ) : (
+                  tagsList.map((tag, idx) => (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono bg-zinc-100 text-zinc-800 border border-zinc-200 shadow-2xs"
+                    >
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const next = tagsList.filter((_, i) => i !== idx);
+                          handleFieldChange(field.name, next);
+                        }}
+                        className="text-zinc-400 hover:text-red-600 rounded-full transition-colors"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </span>
+                  ))
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  id={`input-${field.name}`}
+                  placeholder="输入新标签按 Enter 键添加..."
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const inputEl = e.currentTarget;
+                      const v = inputEl.value.trim();
+                      if (v && !tagsList.includes(v)) {
+                        handleFieldChange(field.name, [...tagsList, v]);
+                        inputEl.value = '';
+                      }
+                    }
+                  }}
+                  className="flex-1 bg-white border border-zinc-200 rounded px-2.5 py-1.5 text-xs outline-none focus:border-[#0070F3] font-mono shadow-2xs"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const inputEl = document.getElementById(`input-${field.name}`) as HTMLInputElement;
+                    if (inputEl) {
+                      const v = inputEl.value.trim();
+                      if (v && !tagsList.includes(v)) {
+                        handleFieldChange(field.name, [...tagsList, v]);
+                        inputEl.value = '';
+                      }
+                    }
+                  }}
+                  className="px-3 py-1.5 text-xs font-mono bg-zinc-900 hover:bg-black text-white rounded font-medium shadow-2xs flex items-center gap-1"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  添加
+                </button>
+              </div>
+            </div>
+          );
+        }
+
         return (
           <div className="space-y-3 bg-zinc-50/80 p-3 border border-zinc-200 rounded-lg">
             {arr.map((item: any, idx: number) => (
               <div key={idx} className="p-3 bg-white border border-zinc-200 rounded-lg space-y-2 relative shadow-2xs">
                 <div className="flex items-center justify-between border-b border-zinc-100 pb-1.5 mb-1.5">
-                  <span className="text-[11px] font-mono font-bold text-zinc-600">友链 #{idx + 1}</span>
+                  <span className="text-[11px] font-mono font-bold text-zinc-600">项目 #{idx + 1}</span>
                   <button
                     type="button"
                     onClick={() => {
@@ -371,7 +446,7 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
               className="w-full py-2 border border-dashed border-zinc-300 hover:border-zinc-500 text-zinc-700 hover:text-zinc-900 rounded-lg text-xs font-mono flex items-center justify-center gap-1.5 transition-colors bg-white shadow-2xs font-medium"
             >
               <Plus className="w-3.5 h-3.5 text-zinc-600" />
-              添加新友链项目
+              添加新项目
             </button>
           </div>
         );
