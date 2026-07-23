@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { spawn } from 'child_process';
-import { parseDocument } from 'yaml';
+import { parseDocument, stringify } from 'yaml';
 
 export const CORE_BUILTIN_PLUGINS = new Set([
   'hexo',
@@ -28,7 +28,43 @@ export interface InstalledTheme {
   path: string;
   isActive: boolean;
   hasConfig: boolean;
+  hasSchema?: boolean;
 }
+
+export interface ThemeSchemaField {
+  name: string;
+  label: string;
+  type: 'text' | 'textarea' | 'number' | 'switch' | 'select' | 'color' | 'code';
+  description?: string;
+  default?: any;
+  options?: { value: any; label: string }[];
+  min?: number;
+  max?: number;
+  language?: string;
+}
+
+export interface ThemeSchemaGroup {
+  id: string;
+  label: string;
+  icon?: string;
+  fields: ThemeSchemaField[];
+}
+
+export interface ThemeSchema {
+  schema_version: string;
+  meta?: {
+    name?: string;
+    display_name?: string;
+    description?: string;
+    version?: string;
+    author?: string;
+    homepage?: string;
+    preview?: string;
+    tags?: string[];
+  };
+  groups: ThemeSchemaGroup[];
+}
+
 
 export class ExtensionService {
   private detectPackageManager(blogDir: string): { cmd: string; installArgs: string[]; removeArgs: string[] } {
@@ -159,11 +195,13 @@ export class ExtensionService {
           const hasConfig =
             fs.existsSync(path.join(fullPath, '_config.yml')) ||
             fs.existsSync(path.join(blogDir, `_config.${d}.yml`));
+          const hasSchema = fs.existsSync(path.join(fullPath, 'theme-schema.yaml'));
           themes.push({
             name: d,
             path: fullPath.replace(/\\/g, '/'),
             isActive: d === activeTheme,
             hasConfig,
+            hasSchema,
           });
         }
       }
@@ -171,6 +209,57 @@ export class ExtensionService {
 
     return themes;
   }
+
+  getThemeSchema(blogDir: string, themeName: string): ThemeSchema | null {
+    const schemaPath = path.join(blogDir, 'themes', themeName, 'theme-schema.yaml');
+    if (!fs.existsSync(schemaPath)) return null;
+
+    try {
+      const raw = fs.readFileSync(schemaPath, 'utf8');
+      const doc = parseDocument(raw);
+      const data = doc.toJS();
+      if (!data || typeof data !== 'object') return null;
+      return data as ThemeSchema;
+    } catch {
+      return null;
+    }
+  }
+
+  getThemeConfig(blogDir: string, themeName: string): Record<string, any> {
+    const baseConfigPath = path.join(blogDir, 'themes', themeName, '_config.yml');
+    const overrideConfigPath = path.join(blogDir, `_config.${themeName}.yml`);
+
+    let baseData: Record<string, any> = {};
+    let overrideData: Record<string, any> = {};
+
+    if (fs.existsSync(baseConfigPath)) {
+      try {
+        const doc = parseDocument(fs.readFileSync(baseConfigPath, 'utf8'));
+        baseData = doc.toJS() || {};
+      } catch {}
+    }
+
+    if (fs.existsSync(overrideConfigPath)) {
+      try {
+        const doc = parseDocument(fs.readFileSync(overrideConfigPath, 'utf8'));
+        overrideData = doc.toJS() || {};
+      } catch {}
+    }
+
+    return { ...baseData, ...overrideData };
+  }
+
+  saveThemeConfig(blogDir: string, themeName: string, config: Record<string, any>): boolean {
+    const overrideConfigPath = path.join(blogDir, `_config.${themeName}.yml`);
+    try {
+      const yamlString = stringify(config);
+      fs.writeFileSync(overrideConfigPath, yamlString, 'utf8');
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
 
   activateTheme(blogDir: string, themeName: string): boolean {
     const configPath = path.join(blogDir, '_config.yml');

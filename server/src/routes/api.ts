@@ -432,6 +432,38 @@ apiRouter.post('/themes/delete', (req, res) => {
   }
 });
 
+// 7.1 主题 Schema 与可视化配置接口
+apiRouter.get('/themes/:name/schema', (req, res) => {
+  const { name } = req.params;
+  const blogDir = getActiveBlogDir();
+  const schema = extensionService.getThemeSchema(blogDir, name);
+  return res.json({ schema });
+});
+
+apiRouter.get('/themes/:name/config', (req, res) => {
+  const { name } = req.params;
+  const blogDir = getActiveBlogDir();
+  const config = extensionService.getThemeConfig(blogDir, name);
+  return res.json({ config });
+});
+
+apiRouter.post('/themes/:name/config', (req, res) => {
+  const { name } = req.params;
+  const { config } = req.body;
+  if (!config || typeof config !== 'object') {
+    return res.status(400).json({ error: 'config object required' });
+  }
+
+  const blogDir = getActiveBlogDir();
+  const ok = extensionService.saveThemeConfig(blogDir, name, config);
+  if (ok) {
+    return res.json({ success: true });
+  } else {
+    return res.status(500).json({ error: 'Failed to save theme config' });
+  }
+});
+
+
 // 8. 全局 _config.yml 接口
 apiRouter.get('/config', (req, res) => {
   const blogDir = (req.query.blogDir as string) || getActiveBlogDir();

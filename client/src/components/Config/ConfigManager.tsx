@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { parseDocument } from 'yaml';
 import { useToast } from '../Common/ToastContext';
 import { CustomScriptModal } from './CustomScriptModal';
+import { ThemeConfigEditor } from './ThemeConfigEditor';
 import {
   Save,
   FileCode,
@@ -53,8 +54,10 @@ export const ConfigManager: React.FC<ConfigManagerProps> = ({
   // Modals UI Control
   const [isSourceModalOpen, setIsSourceModalOpen] = useState(false);
   const [isCustomScriptModalOpen, setIsCustomScriptModalOpen] = useState(false);
+  const [isThemeConfigEditorOpen, setIsThemeConfigEditorOpen] = useState(false);
   const [sourceEditorText, setSourceEditorText] = useState(initialContent);
   const [saving, setSaving] = useState(false);
+
 
   useEffect(() => {
     setYamlText(initialContent);
@@ -317,22 +320,34 @@ export const ConfigManager: React.FC<ConfigManagerProps> = ({
                 <span>当前皮肤主题 (theme)</span>
                 <span className="text-[10px] text-purple-600 font-mono">已安装 {installedThemes.length} 个</span>
               </label>
-              <select
-                value={theme}
-                onChange={(e) => setTheme(e.target.value)}
-                onFocus={fetchInstalledThemes}
-                onClick={fetchInstalledThemes}
-                className="w-full bg-white border border-vercel-border rounded-md px-3 py-1.5 outline-none focus:border-purple-600 font-mono text-xs cursor-pointer font-semibold text-zinc-900 shadow-2xs"
-              >
-                {themeOptions.map((tName) => {
-                  const isBuiltin = tName === 'landscape';
-                  return (
-                    <option key={tName} value={tName}>
-                      {tName} {isBuiltin ? '(Hexo 默认主题)' : '(已安装主程序)'}
-                    </option>
-                  );
-                })}
-              </select>
+              <div className="flex items-center gap-2">
+                <select
+                  value={theme}
+                  onChange={(e) => setTheme(e.target.value)}
+                  onFocus={fetchInstalledThemes}
+                  onClick={fetchInstalledThemes}
+                  className="w-full bg-white border border-vercel-border rounded-md px-3 py-1.5 outline-none focus:border-purple-600 font-mono text-xs cursor-pointer font-semibold text-zinc-900 shadow-2xs"
+                >
+                  {themeOptions.map((tName) => {
+                    const isBuiltin = tName === 'landscape';
+                    return (
+                      <option key={tName} value={tName}>
+                        {tName} {isBuiltin ? '(Hexo 默认主题)' : '(已安装主程序)'}
+                      </option>
+                    );
+                  })}
+                </select>
+
+                <button
+                  type="button"
+                  onClick={() => setIsThemeConfigEditorOpen(true)}
+                  className="btn-secondary text-xs py-1.5 px-2.5 flex items-center gap-1 text-purple-700 bg-purple-50 border-purple-200 hover:bg-purple-100 shrink-0"
+                  title="可视化配置当前主题"
+                >
+                  <Sliders className="w-3.5 h-3.5 text-purple-600" />
+                  配置 Schema
+                </button>
+              </div>
             </div>
 
             <div className="space-y-1.5">
@@ -449,6 +464,15 @@ export const ConfigManager: React.FC<ConfigManagerProps> = ({
       {isCustomScriptModalOpen && (
         <CustomScriptModal onClose={() => setIsCustomScriptModalOpen(false)} />
       )}
+
+      {/* Theme Schema Visual Config Editor Modal */}
+      {isThemeConfigEditorOpen && (
+        <ThemeConfigEditor
+          themeName={theme}
+          onClose={() => setIsThemeConfigEditorOpen(false)}
+        />
+      )}
     </div>
   );
 };
+

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from '../Common/ToastContext';
 import { InstallConsoleModal } from '../Common/InstallConsoleModal';
-import { Search, Download, ExternalLink, RefreshCw, Eye, Trash2, CheckCircle2, Play, Sparkles } from 'lucide-react';
+import { ThemeConfigEditor } from '../Config/ThemeConfigEditor';
+import { Search, Download, ExternalLink, RefreshCw, Eye, Trash2, CheckCircle2, Play, Sparkles, Sliders } from 'lucide-react';
 
 export interface ThemeItem {
   name: string;
@@ -16,7 +17,9 @@ export interface InstalledTheme {
   path: string;
   isActive: boolean;
   hasConfig: boolean;
+  hasSchema?: boolean;
 }
+
 
 export const ThemeMarket: React.FC = () => {
   const { showToast, confirm } = useToast();
@@ -25,6 +28,8 @@ export const ThemeMarket: React.FC = () => {
   const [search, setSearch] = useState('');
   const [filterMode, setFilterMode] = useState<'all' | 'installed'>('all');
   const [loading, setLoading] = useState(true);
+  const [editingThemeConfig, setEditingThemeConfig] = useState<string | null>(null);
+
 
   // Streaming Log Console Modal
   const [consoleModal, setConsoleModal] = useState<{
@@ -320,6 +325,15 @@ export const ThemeMarket: React.FC = () => {
 
                   {installedInfo ? (
                     <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setEditingThemeConfig(theme.name)}
+                        className="btn-secondary text-xs py-1.5 px-2.5 flex items-center gap-1 text-purple-700 bg-purple-50 border-purple-200 hover:bg-purple-100"
+                        title="可视化编辑主题配置"
+                      >
+                        <Sliders className="w-3.5 h-3.5 text-purple-600" />
+                        配置
+                      </button>
+
                       {!isActive ? (
                         <button
                           onClick={() => handleActivateTheme(theme.name)}
@@ -369,6 +383,15 @@ export const ThemeMarket: React.FC = () => {
           onClose={() => setConsoleModal((prev) => ({ ...prev, show: false }))}
         />
       )}
+
+      {/* Theme Schema Visual Config Editor Modal */}
+      {editingThemeConfig && (
+        <ThemeConfigEditor
+          themeName={editingThemeConfig}
+          onClose={() => setEditingThemeConfig(null)}
+        />
+      )}
     </div>
   );
+
 };

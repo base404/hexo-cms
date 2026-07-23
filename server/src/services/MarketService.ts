@@ -105,39 +105,54 @@ export class MarketService {
    * Dynamically parse themes list directly from hexo.io/themes/ or downloaded HTML
    */
   async fetchOfficialThemes(): Promise<MarketItem[]> {
+    const featuredChirpy: MarketItem = {
+      name: 'chirpy',
+      description: '现代三栏 Chirpy 风格博客主题 (内置 Hexo Theme Schema，支持 Glassmorphism、TOC、阅读进度条等可视化配置)',
+      link: 'https://github.com/base404/hexo-theme-chirpy',
+      preview: 'https://www.airbozh.cn/',
+      tags: ['精选推荐', '三栏布局', 'Schema', 'Glassmorphism', 'TOC'],
+    };
+
     const cached = this.readCache('themes.json', 24 * 60 * 60 * 1000);
+    let resultItems: MarketItem[] = [];
+
     if (cached && cached.length > 0) {
-      return cached;
-    }
-
-    // 1. Try reading local html for instant debug
-    const localHtmlPath = path.join(this.rootDir, 'Themes _ Hexo.html');
-    if (fs.existsSync(localHtmlPath)) {
-      const html = fs.readFileSync(localHtmlPath, 'utf8');
-      const items = parseThemesHtml(html);
-      if (items.length > 0) {
-        this.writeCache('themes.json', items);
-        return items;
-      }
-    }
-
-    // 2. Fallback to online live fetch https://hexo.io/themes/
-    try {
-      const res = await fetch('https://hexo.io/themes/', {
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
-      });
-      if (res.ok) {
-        const html = await res.text();
+      resultItems = cached;
+    } else {
+      // 1. Try reading local html for instant debug
+      const localHtmlPath = path.join(this.rootDir, 'Themes _ Hexo.html');
+      if (fs.existsSync(localHtmlPath)) {
+        const html = fs.readFileSync(localHtmlPath, 'utf8');
         const items = parseThemesHtml(html);
         if (items.length > 0) {
           this.writeCache('themes.json', items);
-          return items;
+          resultItems = items;
         }
       }
-    } catch (e) {
-      console.warn('Live fetch hexo.io/themes failed:', e);
+
+      // 2. Fallback to online live fetch https://hexo.io/themes/
+      if (resultItems.length === 0) {
+        try {
+          const res = await fetch('https://hexo.io/themes/', {
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+          });
+          if (res.ok) {
+            const html = await res.text();
+            const items = parseThemesHtml(html);
+            if (items.length > 0) {
+              this.writeCache('themes.json', items);
+              resultItems = items;
+            }
+          }
+        } catch (e) {
+          console.warn('Live fetch hexo.io/themes failed:', e);
+        }
+      }
     }
 
-    return [];
+    // Ensure chirpy is at top, avoiding duplicates
+    const filtered = resultItems.filter((i) => i.name.toLowerCase() !== 'chirpy');
+    return [featuredChirpy, ...filtered];
   }
 }
+

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import * as path from 'path';
 import * as fs from 'fs';
 import { ExtensionService } from '../../src/services/ExtensionService.js';
@@ -7,31 +7,35 @@ describe('ExtensionService (TDD)', () => {
   const service = new ExtensionService();
   const sampleBlogDir = path.join(__dirname, '../fixtures/sample-blog');
 
-  // Setup sample blog fixture
-  if (!fs.existsSync(sampleBlogDir)) {
-    fs.mkdirSync(sampleBlogDir, { recursive: true });
-  }
-
-  const pkgPath = path.join(sampleBlogDir, 'package.json');
-  fs.writeFileSync(
-    pkgPath,
-    JSON.stringify({
-      name: 'sample',
-      dependencies: {
-        hexo: '^8.0.0',
-        'hexo-generator-feed': '^3.0.0',
-        'hexo-filter-mermaid-diagrams': '^1.0.0',
-      },
-    }),
-    'utf8'
-  );
-
-  const configPath = path.join(sampleBlogDir, '_config.yml');
-  fs.writeFileSync(configPath, 'theme: landscape\ntitle: Sample Blog\n', 'utf8');
-
   const themesDir = path.join(sampleBlogDir, 'themes');
-  fs.mkdirSync(path.join(themesDir, 'landscape'), { recursive: true });
-  fs.mkdirSync(path.join(themesDir, 'butterfly'), { recursive: true });
+
+  beforeAll(() => {
+    if (fs.existsSync(sampleBlogDir)) {
+      fs.rmSync(sampleBlogDir, { recursive: true, force: true });
+    }
+    fs.mkdirSync(sampleBlogDir, { recursive: true });
+
+    const pkgPath = path.join(sampleBlogDir, 'package.json');
+    fs.writeFileSync(
+      pkgPath,
+      JSON.stringify({
+        name: 'sample',
+        dependencies: {
+          hexo: '^8.0.0',
+          'hexo-generator-feed': '^3.0.0',
+          'hexo-filter-mermaid-diagrams': '^1.0.0',
+        },
+      }),
+      'utf8'
+    );
+
+    const configPath = path.join(sampleBlogDir, '_config.yml');
+    fs.writeFileSync(configPath, 'theme: landscape\ntitle: Sample Blog\n', 'utf8');
+
+    fs.mkdirSync(path.join(themesDir, 'landscape'), { recursive: true });
+    fs.mkdirSync(path.join(themesDir, 'butterfly'), { recursive: true });
+  });
+
 
   it('should list installed hexo plugins and mark core plugins accurately', () => {
     const plugins = service.getInstalledPlugins(sampleBlogDir);
@@ -70,4 +74,64 @@ describe('ExtensionService (TDD)', () => {
     const updatedThemes = service.getInstalledThemes(sampleBlogDir);
     expect(updatedThemes.find((t) => t.name === 'butterfly')).toBeUndefined();
   });
+
+  it('should parse theme-schema.yaml if present in theme directory', () => {
+    const chirpyDir = path.join(themesDir, 'chirpy');
+    if (!fs.existsSync(chirpyDir)) {
+      fs.mkdirSync(chirpyDir, { recursive: true });
+    }
+
+    const schemaContent = `
+schema_version: "1.0"
+meta:
+  name: "chirpy"
+  display_name: "Chirpy"
+groups:
+  - id: "basic"
+    label: "基础设置"
+    fields:
+      - name: "subtitle"
+        label: "副标题"
+        type: "text"
+        default: "Hello Chirpy"
+`;
+    fs.writeFileSync(path.join(chirpyDir, 'theme-schema.yaml'), schemaContent, 'utf8');
+
+    const schema = service.getThemeSchema(sampleBlogDir, 'chirpy');
+    expect(schema).not.toBeNull();
+    expect(schema?.meta?.display_name).toBe('Chirpy');
+    expect(schema?.groups[0].fields[0].name).toBe('subtitle');
+
+    // Theme with no schema should return null
+    const noSchema = service.getThemeSchema(sampleBlogDir, 'landscape');
+    expect(noSchema).toBeNull();
+  });
+
+
+  it('should get and save theme config using Hexo 5+ _config.<theme>.yml override mechanism', () => {
+    const chirpyDir = path.join(themesDir, 'chirpy');
+    fs.writeFileSync(path.join(chirpyDir, '_config.yml'), 'subtitle: Hello Chirpy\naccent_color: "#7952b3"\n', 'utf8');
+
+    // 1. Get initial merged config (no override yet)
+    let config = service.getThemeConfig(sampleBlogDir, 'chirpy');
+    expect(config.subtitle).toBe('Hello Chirpy');
+    expect(config.accent_color).toBe('#7952b3');
+
+    // 2. Save user override to root _config.chirpy.yml
+    const saved = service.saveThemeConfig(sampleBlogDir, 'chirpy', {
+      subtitle: 'Custom Subtitle',
+      accent_color: '#5e81ac',
+    });
+    expect(saved).toBe(true);
+
+    // Verify _config.chirpy.yml was created in blog root
+    const overrideFile = path.join(sampleBlogDir, '_config.chirpy.yml');
+    expect(fs.existsSync(overrideFile)).toBe(true);
+
+    // 3. Get merged config again, verify user overrides take precedence
+    config = service.getThemeConfig(sampleBlogDir, 'chirpy');
+    expect(config.subtitle).toBe('Custom Subtitle');
+    expect(config.accent_color).toBe('#5e81ac');
+  });
 });
+
