@@ -19,6 +19,8 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
   const [meta, setMeta] = useState<Record<string, any>>(frontMatter || { title: 'Untitled Post', tags: [] });
   const [tagInput, setTagInput] = useState('');
   const [categoryInput, setCategoryInput] = useState('');
+  const [availableCategories, setAvailableCategories] = useState<{ name: string; count: number }[]>([]);
+  const [availableTags, setAvailableTags] = useState<{ name: string; count: number }[]>([]);
   const [showDrawer, setShowDrawer] = useState(false);
 
   const formatArrayToString = (val: any) => {
@@ -39,7 +41,43 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
     setMeta(m);
     setTagInput(formatArrayToString(m.tags));
     setCategoryInput(formatArrayToString(m.categories));
+
+    fetch('/api/taxonomy')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) {
+          setAvailableCategories(data.categories || []);
+          setAvailableTags(data.tags || []);
+        }
+      })
+      .catch(() => {});
   }, [frontMatter]);
+
+  const toggleTagItem = (tagName: string) => {
+    const currentTags = parseCommaList(tagInput);
+    let nextTags: string[];
+    if (currentTags.includes(tagName)) {
+      nextTags = currentTags.filter((t) => t !== tagName);
+    } else {
+      nextTags = [...currentTags, tagName];
+    }
+    const nextText = nextTags.join(', ');
+    setTagInput(nextText);
+    setMeta((prev) => ({ ...prev, tags: nextTags }));
+  };
+
+  const toggleCategoryItem = (catName: string) => {
+    const currentCats = parseCommaList(categoryInput);
+    let nextCats: string[];
+    if (currentCats.includes(catName)) {
+      nextCats = currentCats.filter((c) => c !== catName);
+    } else {
+      nextCats = [...currentCats, catName];
+    }
+    const nextText = nextCats.join(', ');
+    setCategoryInput(nextText);
+    setMeta((prev) => ({ ...prev, categories: nextCats }));
+  };
 
   const editor = useEditor({
     extensions: [StarterKit],
@@ -147,11 +185,14 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
 
         {/* Front-Matter Drawer Side Overlay */}
         {showDrawer && (
-          <div className="w-80 border-l border-vercel-border bg-vercel-neutral p-4 flex flex-col gap-4 text-xs font-mono">
+          <div className="w-80 border-l border-vercel-border bg-vercel-neutral p-4 flex flex-col gap-4 text-xs font-mono overflow-y-auto">
             <h3 className="label-caps text-gray-500">Front-matter 元数据配置</h3>
 
             <div>
-              <label className="block text-gray-500 mb-1">标签 (Tags, 逗号分隔)</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-gray-500">标签 (Tags)</label>
+                <span className="text-[10px] text-gray-400">点击下方快速选择</span>
+              </div>
               <input
                 type="text"
                 value={tagInput}
@@ -166,10 +207,35 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
                 placeholder="前端, React"
                 className="w-full bg-white border border-vercel-border rounded-md px-2.5 py-1.5 text-xs outline-none focus:border-vercel-blue font-sans"
               />
+
+              {availableTags.length > 0 && (
+                <div className="flex flex-wrap gap-1 pt-1.5 max-h-28 overflow-y-auto">
+                  {availableTags.map((t) => {
+                    const isSelected = parseCommaList(tagInput).includes(t.name);
+                    return (
+                      <button
+                        key={t.name}
+                        type="button"
+                        onClick={() => toggleTagItem(t.name)}
+                        className={`text-[10px] font-mono px-2 py-0.5 rounded-[4px] border transition-all ${
+                          isSelected
+                            ? 'bg-[#171717] text-white border-[#171717] font-semibold'
+                            : 'bg-zinc-50 text-zinc-600 border-zinc-200 hover:bg-zinc-100'
+                        }`}
+                      >
+                        #{t.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             <div>
-              <label className="block text-gray-500 mb-1">分类 (Categories, 逗号分隔)</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-gray-500">分类 (Categories)</label>
+                <span className="text-[10px] text-gray-400">点击下方快速选择</span>
+              </div>
               <input
                 type="text"
                 value={categoryInput}
@@ -184,6 +250,28 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
                 placeholder="技术分类, 前端干货"
                 className="w-full bg-white border border-vercel-border rounded-md px-2.5 py-1.5 text-xs outline-none focus:border-vercel-blue font-sans"
               />
+
+              {availableCategories.length > 0 && (
+                <div className="flex flex-wrap gap-1 pt-1.5 max-h-28 overflow-y-auto">
+                  {availableCategories.map((c) => {
+                    const isSelected = parseCommaList(categoryInput).includes(c.name);
+                    return (
+                      <button
+                        key={c.name}
+                        type="button"
+                        onClick={() => toggleCategoryItem(c.name)}
+                        className={`text-[10px] font-sans px-2 py-0.5 rounded-[4px] border transition-all ${
+                          isSelected
+                            ? 'bg-[#171717] text-white border-[#171717] font-semibold'
+                            : 'bg-zinc-50 text-zinc-600 border-zinc-200 hover:bg-zinc-100'
+                        }`}
+                      >
+                        📁 {c.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             <div>

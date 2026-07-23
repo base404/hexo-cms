@@ -9,30 +9,28 @@ import { ThemeMarket } from './components/Market/ThemeMarket';
 import { ConfigManager } from './components/Config/ConfigManager';
 import { BuildConsole } from './components/Build/BuildConsole';
 import { HexoServerControl } from './components/Build/HexoServerControl';
+import { TaxonomyManager } from './components/Taxonomy/TaxonomyManager';
 import {
   FileEdit,
   Package,
   Palette,
   Settings,
   Terminal,
-  Globe,
-  Play,
-  Layers,
-  CheckCircle,
   Folder,
   ArrowLeft,
   Lock,
+  FolderTree,
 } from 'lucide-react';
 
-type TabType = 'posts' | 'editor' | 'plugins' | 'themes' | 'config' | 'build';
+type TabType = 'posts' | 'taxonomy' | 'editor' | 'plugins' | 'themes' | 'config' | 'build';
 
 const getInitialTab = (): TabType => {
   const hash = window.location.hash.replace('#', '');
-  if (['posts', 'editor', 'plugins', 'themes', 'config', 'build'].includes(hash)) {
+  if (['posts', 'taxonomy', 'editor', 'plugins', 'themes', 'config', 'build'].includes(hash)) {
     return hash as TabType;
   }
   const saved = localStorage.getItem('hexo_gui_active_tab');
-  if (saved && ['posts', 'editor', 'plugins', 'themes', 'config', 'build'].includes(saved)) {
+  if (saved && ['posts', 'taxonomy', 'editor', 'plugins', 'themes', 'config', 'build'].includes(saved)) {
     return saved as TabType;
   }
   return 'posts';
@@ -75,7 +73,7 @@ const MainApp: React.FC = () => {
 
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '') as TabType;
-      if (['posts', 'editor', 'plugins', 'themes', 'config', 'build'].includes(hash)) {
+      if (['posts', 'taxonomy', 'editor', 'plugins', 'themes', 'config', 'build'].includes(hash)) {
         setActiveTab(hash);
       }
     };
@@ -179,7 +177,7 @@ const MainApp: React.FC = () => {
           isDraft: isDraft,
           readMtime: editingPost.readMtime,
           originalFilename: editingPost.originalFilename,
-          originalFilePath: editingPost.fullPath,
+          originalFilePath: (editingPost as any).fullPath,
         }),
       });
 
@@ -260,6 +258,17 @@ const MainApp: React.FC = () => {
               >
                 <FileEdit className="w-3.5 h-3.5" />
                 文章管理
+              </button>
+              <button
+                onClick={() => workspace.isHexoBlog && changeActiveTab('taxonomy')}
+                disabled={!workspace.isHexoBlog}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
+                  activeTab === 'taxonomy' ? 'bg-zinc-100 text-black font-semibold' : 'hover:bg-zinc-50'
+                } ${!workspace.isHexoBlog ? 'opacity-40 cursor-not-allowed' : ''}`}
+              >
+                <FolderTree className="w-3.5 h-3.5" />
+                分类与标签
+                {!workspace.isHexoBlog && <Lock className="w-3 h-3 text-gray-400" />}
               </button>
               <button
                 onClick={() => workspace.isHexoBlog && changeActiveTab('plugins')}
@@ -343,6 +352,8 @@ const MainApp: React.FC = () => {
                 onCreateNewPost={handleCreateNewPost}
               />
             )}
+
+            {activeTab === 'taxonomy' && <TaxonomyManager />}
 
             {activeTab === 'editor' && (
               <div className="space-y-3">

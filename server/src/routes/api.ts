@@ -10,6 +10,7 @@ import { CustomScriptService } from '../services/CustomScriptService.js';
 import { BuildService } from '../services/BuildService.js';
 import { hexoServerService } from '../services/HexoServerService.js';
 import { hexoManager } from '../core/HexoInstanceManager.js';
+import { TaxonomyService } from '../services/TaxonomyService.js';
 
 export const apiRouter = Router();
 
@@ -649,3 +650,43 @@ apiRouter.post('/posts/delete', (req, res) => {
     return res.status(500).json({ error: e.message });
   }
 });
+
+// Taxonomy (Category & Tag) Manager Routes
+apiRouter.get('/taxonomy', (_req, res) => {
+  try {
+    const blogDir = getBlogDir();
+    const result = TaxonomyService.getTaxonomies(blogDir);
+    return res.json(result);
+  } catch (e: any) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+apiRouter.post('/taxonomy/rename', (req, res) => {
+  const { type, oldName, newName } = req.body;
+  if (!type || !oldName || !newName) {
+    return res.status(400).json({ error: 'Missing required parameters (type, oldName, newName)' });
+  }
+  try {
+    const blogDir = getBlogDir();
+    const result = TaxonomyService.renameTaxonomy(blogDir, type, oldName, newName);
+    return res.json({ success: true, ...result });
+  } catch (e: any) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+apiRouter.post('/taxonomy/delete', (req, res) => {
+  const { type, name } = req.body;
+  if (!type || !name) {
+    return res.status(400).json({ error: 'Missing required parameters (type, name)' });
+  }
+  try {
+    const blogDir = getBlogDir();
+    const result = TaxonomyService.deleteTaxonomy(blogDir, type, name);
+    return res.json({ success: true, ...result });
+  } catch (e: any) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
