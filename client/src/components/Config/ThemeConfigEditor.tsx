@@ -289,9 +289,9 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
           : typeof val === 'string'
           ? val.split(',').map((s) => s.trim()).filter(Boolean)
           : [];
-        const isStringArray = field.type === 'tags' || (arr.length > 0 && typeof arr[0] === 'string');
+        const isTagField = field.type === 'tags' || (arr.length > 0 && typeof arr[0] === 'string');
 
-        if (isStringArray || (arr.length === 0 && field.type !== 'json')) {
+        if (isTagField) {
           const tagsList: string[] = arr.map(String);
           return (
             <div className="space-y-2 bg-zinc-50/80 p-3 border border-zinc-200 rounded-lg">
