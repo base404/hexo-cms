@@ -269,6 +269,78 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
     }
   }, [renderedHtml]);
 
+  // Process imported text & extract Front-matter or H1 header title (# XX)
+  const processImportedText = (rawText: string, fileName: string) => {
+    let cleanText = rawText;
+    let extractedTitle = '';
+    const extractedMeta: Record<string, any> = {};
+
+    // 1. Parse YAML Front-matter (--- ... ---) if present
+    const fmMatch = cleanText.match(/^---\s*[\r\n]+([\s\S]*?)[\r\n]+---\s*[\r\n]*/);
+    if (fmMatch) {
+      const yamlStr = fmMatch[1];
+      cleanText = cleanText.slice(fmMatch[0].length);
+
+      yamlStr.split('\n').forEach((line) => {
+        const colonIdx = line.indexOf(':');
+        if (colonIdx > 0) {
+          const key = line.slice(0, colonIdx).trim();
+          let val = line.slice(colonIdx + 1).trim();
+          if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+            val = val.slice(1, -1);
+          }
+          if (key === 'title') {
+            extractedTitle = val;
+          } else if (key === 'tags' || key === 'categories') {
+            if (val.startsWith('[') && val.endsWith(']')) {
+              extractedMeta[key] = val.slice(1, -1).split(',').map((s) => s.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean);
+            }
+          } else {
+            extractedMeta[key] = val;
+          }
+        }
+      });
+    }
+
+    // 2. Extract first non-empty line H1 header (# Title) if available
+    const lines = cleanText.split('\n');
+    let h1Index = -1;
+    for (let i = 0; i < lines.length; i++) {
+      const trimmedLine = lines[i].trim();
+      if (trimmedLine.startsWith('# ')) {
+        h1Index = i;
+        const h1Title = trimmedLine.replace(/^#\s+/, '').trim();
+        if (!extractedTitle) {
+          extractedTitle = h1Title;
+        }
+        break;
+      }
+      if (trimmedLine.length > 0) {
+        break;
+      }
+    }
+
+    // If H1 header was found at the beginning, strip it from content body
+    if (h1Index !== -1) {
+      lines.splice(h1Index, 1);
+      cleanText = lines.join('\n').replace(/^\s*[\r\n]+/, '');
+    }
+
+    // 3. Fallback title from file name
+    if (!extractedTitle && fileName) {
+      extractedTitle = fileName.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+    }
+
+    // Update Meta and Content state
+    if (extractedTitle) {
+      setMeta((prev) => ({ ...prev, ...extractedMeta, title: extractedTitle }));
+    } else if (Object.keys(extractedMeta).length > 0) {
+      setMeta((prev) => ({ ...prev, ...extractedMeta }));
+    }
+
+    handleContentChange(cleanText);
+  };
+
   // Handle Drag and Drop Markdown / Text File Import
   const handleFileDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -281,7 +353,7 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
         reader.onload = (event) => {
           const text = event.target?.result as string;
           if (text) {
-            handleContentChange(text);
+            processImportedText(text, file.name);
           }
         };
         reader.readAsText(file);
