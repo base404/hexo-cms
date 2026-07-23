@@ -15,6 +15,8 @@ import {
   Upload,
   CheckCircle2,
   FileCode,
+  Check,
+  Plus,
 } from 'lucide-react';
 
 interface SplitViewMarkdownEditorProps {
@@ -34,10 +36,14 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
 }) => {
   const [content, setContent] = useState(initialContent);
   const [meta, setMeta] = useState<Record<string, any>>(frontMatter || { title: 'Untitled Post', tags: [], categories: [] });
-  const [tagInput, setTagInput] = useState('');
-  const [categoryInput, setCategoryInput] = useState('');
   const [availableCategories, setAvailableCategories] = useState<{ name: string; count: number }[]>([]);
   const [availableTags, setAvailableTags] = useState<{ name: string; count: number }[]>([]);
+
+  // State for inline creation of new tag / category
+  const [showNewTagInput, setShowNewTagInput] = useState(false);
+  const [newTagVal, setNewTagVal] = useState('');
+  const [showNewCatInput, setShowNewCatInput] = useState(false);
+  const [newCatVal, setNewCatVal] = useState('');
 
   const [viewMode, setViewMode] = useState<'split' | 'source' | 'preview'>('split');
   const [showDrawer, setShowDrawer] = useState(false);
@@ -51,29 +57,37 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
 
   const previewRef = useRef<HTMLDivElement>(null);
 
-  const formatArrayToString = (val: any) => {
-    if (Array.isArray(val)) return val.join(', ');
-    if (typeof val === 'string') return val;
-    return '';
-  };
-
-  const parseCommaList = (text: string): string[] => {
-    return text
-      .split(/[,，]/)
-      .map((s) => s.trim())
-      .filter(Boolean);
+  const formatDateForInput = (dStr?: string) => {
+    if (!dStr) return new Date().toISOString().slice(0, 16);
+    try {
+      const d = new Date(dStr);
+      if (isNaN(d.getTime())) return new Date().toISOString().slice(0, 16);
+      const pad = (n: number) => (n < 10 ? '0' + n : n);
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    } catch {
+      return new Date().toISOString().slice(0, 16);
+    }
   };
 
   // Sync props when changing posts & fetch taxonomy list
   useEffect(() => {
     setContent(initialContent);
     const m = frontMatter || { title: 'Untitled Post', tags: [], categories: [] };
-    setMeta(m);
-    setTagInput(formatArrayToString(m.tags));
-    setCategoryInput(formatArrayToString(m.categories));
+    const catsArr = Array.isArray(m.categories) ? m.categories : m.categories ? [m.categories] : [];
+    const tagsArr = Array.isArray(m.tags) ? m.tags : m.tags ? [m.tags] : [];
+
+    setMeta({
+      ...m,
+      categories: catsArr,
+      tags: tagsArr,
+    });
     historyRef.current = [initialContent];
     historyIndexRef.current = 0;
 
+    fetchTaxonomies();
+  }, [initialContent, frontMatter]);
+
+  const fetchTaxonomies = () => {
     fetch('/api/taxonomy')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -83,32 +97,62 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
         }
       })
       .catch(() => {});
-  }, [initialContent, frontMatter]);
+  };
 
   const toggleTagItem = (tagName: string) => {
-    const currentTags = parseCommaList(tagInput);
+    const currentTags: string[] = Array.isArray(meta.tags) ? meta.tags : [];
     let nextTags: string[];
     if (currentTags.includes(tagName)) {
       nextTags = currentTags.filter((t) => t !== tagName);
     } else {
       nextTags = [...currentTags, tagName];
     }
-    const nextText = nextTags.join(', ');
-    setTagInput(nextText);
     setMeta((prev) => ({ ...prev, tags: nextTags }));
   };
 
   const toggleCategoryItem = (catName: string) => {
-    const currentCats = parseCommaList(categoryInput);
+    const currentCats: string[] = Array.isArray(meta.categories) ? meta.categories : [];
     let nextCats: string[];
     if (currentCats.includes(catName)) {
       nextCats = currentCats.filter((c) => c !== catName);
     } else {
       nextCats = [...currentCats, catName];
     }
-    const nextText = nextCats.join(', ');
-    setCategoryInput(nextText);
     setMeta((prev) => ({ ...prev, categories: nextCats }));
+  };
+
+  const handleAddNewTag = () => {
+    const trimmed = newTagVal.trim();
+    if (!trimmed) return;
+    if (!availableTags.some((t) => t.name === trimmed)) {
+      setAvailableTags((prev) => [...prev, { name: trimmed, count: 0 }]);
+    }
+    toggleTagItem(trimmed);
+    setNewTagVal('');
+    setShowNewTagInput(false);
+
+    fetch('/api/taxonomy/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'tag', name: trimmed }),
+    }).catch(() => {});
+  };
+
+  const handleAddNewCat = () => {
+    const trimmed = newCatVal.trim();
+    if (!trimmed) return;
+    if (!availableCategories.some((c) => c.name === trimmed)) {
+      setAvailableCategories((prev) => [...prev, { name: trimmed, count: 0 }]);
+    }
+    toggleCategoryItem(trimmed);
+    setNewCatVal('');
+    setShowNewCatInput(false);
+
+    fetch('/api/taxonomy/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'category', name: trimmed }),
+    }).catch(() => {});
   };
 
   // Record content changes into history stack (debounced)
@@ -244,6 +288,9 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
       }
     }
   };
+
+  const selectedTags: string[] = Array.isArray(meta.tags) ? meta.tags : [];
+  const selectedCats: string[] = Array.isArray(meta.categories) ? meta.categories : [];
 
   return (
     <div
@@ -393,7 +440,7 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
         {/* Front-Matter Drawer Side Overlay */}
         {showDrawer && (
           <div className="absolute top-0 right-0 bottom-0 w-80 bg-white border-l border-vercel-border shadow-xl z-20 p-5 flex flex-col justify-between overflow-y-auto animate-in slide-in-from-right duration-200">
-            <div className="space-y-4 text-xs">
+            <div className="space-y-5 text-xs">
               <div className="flex items-center justify-between border-b border-vercel-border pb-3">
                 <span className="font-semibold text-sm text-vercel-black flex items-center gap-1.5">
                   <Sparkles className="w-4 h-4 text-vercel-blue" />
@@ -413,138 +460,155 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
                   type="text"
                   value={meta.title || ''}
                   onChange={(e) => setMeta({ ...meta, title: e.target.value })}
-                  className="w-full bg-white border border-vercel-border rounded px-2.5 py-1.5 outline-none focus:border-vercel-blue"
+                  className="w-full bg-white border border-vercel-border rounded px-2.5 py-1.5 outline-none focus:border-vercel-blue font-sans text-xs"
                 />
               </div>
 
+              {/* Date Component using datetime-local */}
               <div className="space-y-1">
                 <label className="font-medium text-gray-700">发布日期 (date)</label>
                 <input
-                  type="text"
-                  value={meta.date || ''}
-                  onChange={(e) => setMeta({ ...meta, date: e.target.value })}
-                  className="w-full bg-white border border-vercel-border rounded px-2.5 py-1.5 outline-none focus:border-vercel-blue font-mono"
+                  type="datetime-local"
+                  value={formatDateForInput(meta.date)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const formattedDate = val ? new Date(val).toISOString() : new Date().toISOString();
+                    setMeta((prev) => ({ ...prev, date: formattedDate }));
+                  }}
+                  className="w-full bg-white border border-vercel-border rounded px-2.5 py-1.5 outline-none focus:border-vercel-blue font-mono text-xs cursor-pointer"
                 />
               </div>
 
-              {/* Tags Section with Dropdown & Pills Selector */}
-              <div className="space-y-1.5">
-                <label className="font-medium text-gray-700">标签 (tags, 逗号分隔)</label>
-
-                {/* Dropdown Select Menu */}
-                <select
-                  className="w-full bg-white border border-zinc-200 rounded px-2.5 py-1.5 text-xs outline-none focus:border-vercel-blue font-sans shadow-2xs"
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      toggleTagItem(e.target.value);
-                      e.target.value = '';
-                    }
-                  }}
-                >
-                  <option value="">-- 选择已有标签 ({availableTags.length}) --</option>
-                  {availableTags.map((t) => (
-                    <option key={t.name} value={t.name}>
-                      #{t.name} ({t.count} 篇)
-                    </option>
-                  ))}
-                </select>
-
+              {/* Cover Image URL */}
+              <div className="space-y-1">
+                <label className="font-medium text-gray-700">文章封面图 (cover)</label>
                 <input
                   type="text"
-                  value={tagInput}
-                  onChange={(e) => {
-                    const text = e.target.value;
-                    setTagInput(text);
-                    setMeta((prev) => ({
-                      ...prev,
-                      tags: parseCommaList(text),
-                    }));
-                  }}
-                  placeholder="前端, React, Vite"
-                  className="w-full bg-white border border-vercel-border rounded px-2.5 py-1.5 outline-none focus:border-vercel-blue font-sans text-xs"
+                  value={meta.cover || meta.image || ''}
+                  onChange={(e) => setMeta({ ...meta, cover: e.target.value })}
+                  placeholder="/images/cover.png 或 URL"
+                  className="w-full bg-white border border-vercel-border rounded px-2.5 py-1.5 outline-none focus:border-vercel-blue font-mono text-xs"
                 />
-
-                {availableTags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 pt-1 max-h-28 overflow-y-auto">
-                    {availableTags.map((t) => {
-                      const isSelected = parseCommaList(tagInput).includes(t.name);
-                      return (
-                        <button
-                          key={t.name}
-                          type="button"
-                          onClick={() => toggleTagItem(t.name)}
-                          className={`text-[10px] font-mono px-2 py-0.5 rounded-[4px] border transition-all ${
-                            isSelected
-                              ? 'bg-[#171717] text-white border-[#171717] font-semibold'
-                              : 'bg-zinc-50 text-zinc-600 border-zinc-200 hover:bg-zinc-100'
-                          }`}
-                        >
-                          #{t.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
               </div>
 
-              {/* Categories Section with Dropdown & Pills Selector */}
+              {/* Tags Section with Direct Click Selection */}
               <div className="space-y-1.5">
-                <label className="font-medium text-gray-700">分类 (categories, 逗号分隔)</label>
+                <div className="flex items-center justify-between">
+                  <label className="font-medium text-gray-700">文章标签 (tags)</label>
+                  <span className="text-[10px] text-gray-400 font-mono">点击按钮直选</span>
+                </div>
 
-                {/* Dropdown Select Menu */}
-                <select
-                  className="w-full bg-white border border-zinc-200 rounded px-2.5 py-1.5 text-xs outline-none focus:border-vercel-blue font-sans shadow-2xs"
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      toggleCategoryItem(e.target.value);
-                      e.target.value = '';
-                    }
-                  }}
-                >
-                  <option value="">-- 选择已有分类 ({availableCategories.length}) --</option>
-                  {availableCategories.map((c) => (
-                    <option key={c.name} value={c.name}>
-                      📁 {c.name} ({c.count} 篇)
-                    </option>
-                  ))}
-                </select>
+                <div className="flex flex-wrap gap-1.5 p-2 bg-zinc-50 border border-zinc-200 rounded-[6px] max-h-36 overflow-y-auto">
+                  {availableTags.map((t) => {
+                    const isSelected = selectedTags.includes(t.name);
+                    return (
+                      <button
+                        key={t.name}
+                        type="button"
+                        onClick={() => toggleTagItem(t.name)}
+                        className={`text-[11px] font-mono px-2.5 py-1 rounded-[4px] border transition-all flex items-center gap-1 ${
+                          isSelected
+                            ? 'bg-[#171717] text-white border-[#171717] font-semibold shadow-2xs'
+                            : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+                        }`}
+                      >
+                        <span>#{t.name}</span>
+                        {isSelected && <Check className="w-3 h-3 text-emerald-400" />}
+                      </button>
+                    );
+                  })}
 
-                <input
-                  type="text"
-                  value={categoryInput}
-                  onChange={(e) => {
-                    const text = e.target.value;
-                    setCategoryInput(text);
-                    setMeta((prev) => ({
-                      ...prev,
-                      categories: parseCommaList(text),
-                    }));
-                  }}
-                  placeholder="技术分类, 前端干货"
-                  className="w-full bg-white border border-vercel-border rounded px-2.5 py-1.5 outline-none focus:border-vercel-blue font-sans text-xs"
-                />
+                  {showNewTagInput ? (
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="text"
+                        value={newTagVal}
+                        onChange={(e) => setNewTagVal(e.target.value)}
+                        placeholder="新标签名"
+                        className="w-20 px-1.5 py-0.5 text-[10px] border border-zinc-300 rounded font-mono outline-none focus:border-vercel-blue bg-white"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleAddNewTag();
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddNewTag}
+                        className="text-[10px] bg-[#171717] text-white px-2 py-0.5 rounded font-mono"
+                      >
+                        确定
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowNewTagInput(true)}
+                      className="text-[10px] font-mono px-2 py-0.5 rounded-[4px] border border-dashed border-zinc-300 text-zinc-500 hover:text-zinc-900 hover:border-zinc-500 bg-white"
+                    >
+                      + 新增标签
+                    </button>
+                  )}
+                </div>
+              </div>
 
-                {availableCategories.length > 0 && (
-                  <div className="flex flex-wrap gap-1 pt-1 max-h-28 overflow-y-auto">
-                    {availableCategories.map((c) => {
-                      const isSelected = parseCommaList(categoryInput).includes(c.name);
-                      return (
-                        <button
-                          key={c.name}
-                          type="button"
-                          onClick={() => toggleCategoryItem(c.name)}
-                          className={`text-[10px] font-sans px-2 py-0.5 rounded-[4px] border transition-all ${
-                            isSelected
-                              ? 'bg-[#171717] text-white border-[#171717] font-semibold'
-                              : 'bg-zinc-50 text-zinc-600 border-zinc-200 hover:bg-zinc-100'
-                          }`}
-                        >
-                          📁 {c.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+              {/* Categories Section with Direct Click Selection */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="font-medium text-gray-700">文章分类 (categories)</label>
+                  <span className="text-[10px] text-gray-400 font-mono">点击按钮直选</span>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 p-2 bg-zinc-50 border border-zinc-200 rounded-[6px] max-h-36 overflow-y-auto">
+                  {availableCategories.map((c) => {
+                    const isSelected = selectedCats.includes(c.name);
+                    return (
+                      <button
+                        key={c.name}
+                        type="button"
+                        onClick={() => toggleCategoryItem(c.name)}
+                        className={`text-[11px] font-sans px-2.5 py-1 rounded-[4px] border transition-all flex items-center gap-1 ${
+                          isSelected
+                            ? 'bg-[#171717] text-white border-[#171717] font-semibold shadow-2xs'
+                            : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+                        }`}
+                      >
+                        <span>📁 {c.name}</span>
+                        {isSelected && <Check className="w-3 h-3 text-emerald-400" />}
+                      </button>
+                    );
+                  })}
+
+                  {showNewCatInput ? (
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="text"
+                        value={newCatVal}
+                        onChange={(e) => setNewCatVal(e.target.value)}
+                        placeholder="新分类名"
+                        className="w-20 px-1.5 py-0.5 text-[10px] border border-zinc-300 rounded font-sans outline-none focus:border-vercel-blue bg-white"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleAddNewCat();
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddNewCat}
+                        className="text-[10px] bg-[#171717] text-white px-2 py-0.5 rounded font-sans"
+                      >
+                        确定
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowNewCatInput(true)}
+                      className="text-[10px] font-sans px-2 py-0.5 rounded-[4px] border border-dashed border-zinc-300 text-zinc-500 hover:text-zinc-900 hover:border-zinc-500 bg-white"
+                    >
+                      + 新增分类
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-1">
@@ -554,7 +618,7 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
                   value={meta.permalink || ''}
                   onChange={(e) => setMeta({ ...meta, permalink: e.target.value })}
                   placeholder="my-custom-post-url"
-                  className="w-full bg-white border border-vercel-border rounded px-2.5 py-1.5 outline-none focus:border-vercel-blue font-mono"
+                  className="w-full bg-white border border-vercel-border rounded px-2.5 py-1.5 outline-none focus:border-vercel-blue font-mono text-xs"
                 />
               </div>
             </div>
