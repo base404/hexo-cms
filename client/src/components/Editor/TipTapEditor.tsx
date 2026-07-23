@@ -1,141 +1,147 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import Placeholder from '@tiptap/extension-placeholder';
-import { HexoTagExtension } from './extensions/HexoTagExtension';
-import { Bold, Italic, Code, Heading1, Heading2, List, Lock, FileText } from 'lucide-react';
+import { Save, Bold, Italic, List, ListOrdered, Code, Sliders } from 'lucide-react';
 
 interface TipTapEditorProps {
   content: string;
-  frontMatter: Record<string, any>;
-  onSave: (content: string, frontMatter: Record<string, any>) => void;
+  frontMatter?: Record<string, any>;
+  onSave: (htmlContent: string, frontMatter: Record<string, any>) => void;
   isSaving?: boolean;
 }
 
 export const TipTapEditor: React.FC<TipTapEditorProps> = ({
-  content,
+  content: initialContent,
   frontMatter,
   onSave,
   isSaving = false,
 }) => {
   const [meta, setMeta] = useState<Record<string, any>>(frontMatter || { title: 'Untitled Post', tags: [] });
+  const [tagInput, setTagInput] = useState('');
+  const [categoryInput, setCategoryInput] = useState('');
   const [showDrawer, setShowDrawer] = useState(false);
 
+  const formatArrayToString = (val: any) => {
+    if (Array.isArray(val)) return val.join(', ');
+    if (typeof val === 'string') return val;
+    return '';
+  };
+
+  const parseCommaList = (text: string): string[] => {
+    return text
+      .split(/[,，]/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+  };
+
+  useEffect(() => {
+    const m = frontMatter || { title: 'Untitled Post', tags: [], categories: [] };
+    setMeta(m);
+    setTagInput(formatArrayToString(m.tags));
+    setCategoryInput(formatArrayToString(m.categories));
+  }, [frontMatter]);
+
   const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Placeholder.configure({
-        placeholder: '写下你的 Markdown 内容...',
-      }),
-      HexoTagExtension,
-    ],
-    content: content,
+    extensions: [StarterKit],
+    content: initialContent,
+    editorProps: {
+      attributes: {
+        class: 'prose focus:outline-none max-w-none min-h-[400px] p-6 text-sm font-sans leading-relaxed',
+      },
+    },
   });
+
+  const handleSave = () => {
+    if (editor) {
+      const html = editor.getHTML();
+      onSave(html, meta);
+    }
+  };
 
   if (!editor) {
     return null;
   }
 
-  const handleSave = () => {
-    const html = editor.getHTML();
-    // Parse out data-hexo-tag elements and revert back to {% %} tag format
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = html;
-    const tagElements = tempDiv.querySelectorAll('span[data-hexo-tag]');
-    tagElements.forEach((el) => {
-      const raw = el.getAttribute('data-raw-tag');
-      if (raw) {
-        el.replaceWith(`{% ${raw} %}`);
-      }
-    });
-
-    onSave(tempDiv.innerText, meta);
-  };
-
   return (
-    <div className="flex flex-col h-full geist-card overflow-hidden">
-      {/* Top Action Header */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-vercel-border bg-white">
+    <div className="border border-vercel-border rounded-lg bg-white overflow-hidden shadow-sm flex flex-col h-[calc(100vh-140px)]">
+      {/* Editor Header Bar */}
+      <div className="flex items-center justify-between px-4 py-2 bg-vercel-neutral border-b border-vercel-border">
         <div className="flex items-center gap-3">
           <input
             type="text"
             value={meta.title || ''}
             onChange={(e) => setMeta({ ...meta, title: e.target.value })}
             placeholder="文章标题..."
-            className="text-xl font-medium tracking-tight bg-transparent border-none outline-none text-vercel-black placeholder-gray-400 w-96"
+            className="text-base font-semibold bg-transparent text-vercel-black placeholder-gray-400 outline-none w-72 focus:w-96 transition-all"
           />
-          <span className="label-caps bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-sm">
-            {meta.published !== false ? 'POST' : 'DRAFT'}
-          </span>
-        </div>
 
-        <div className="flex items-center gap-3">
           <button
             onClick={() => setShowDrawer(!showDrawer)}
-            className="btn-secondary flex items-center gap-1.5 text-xs"
+            className={`btn-secondary text-xs py-1 px-2.5 flex items-center gap-1 transition-colors ${
+              showDrawer ? 'bg-zinc-200 text-black font-semibold' : ''
+            }`}
           >
-            <FileText className="w-3.5 h-3.5" />
-            Front-matter
+            <Sliders className="w-3.5 h-3.5" />
+            元数据
           </button>
+        </div>
+
+        {/* Rich Text Toolbar Options */}
+        <div className="flex items-center gap-1 bg-white border border-vercel-border rounded-md p-1">
           <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="btn-primary-pill text-xs px-5 py-1.5"
+            onClick={() => editor.chain().focus().toggleBold().run()}
+            className={`p-1.5 rounded hover:bg-zinc-100 ${editor.isActive('bold') ? 'bg-zinc-200 text-black font-bold' : 'text-gray-600'}`}
+            title="加粗"
           >
-            {isSaving ? '保存中...' : '保存文章'}
+            <Bold className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+            className={`p-1.5 rounded hover:bg-zinc-100 ${editor.isActive('italic') ? 'bg-zinc-200 text-black italic' : 'text-gray-600'}`}
+            title="斜体"
+          >
+            <Italic className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={() => editor.chain().focus().toggleBulletList().run()}
+            className={`p-1.5 rounded hover:bg-zinc-100 ${editor.isActive('bulletList') ? 'bg-zinc-200 text-black' : 'text-gray-600'}`}
+            title="无序列表"
+          >
+            <List className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={() => editor.chain().focus().toggleOrderedList().run()}
+            className={`p-1.5 rounded hover:bg-zinc-100 ${editor.isActive('orderedList') ? 'bg-zinc-200 text-black' : 'text-gray-600'}`}
+            title="有序列表"
+          >
+            <ListOrdered className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+            className={`p-1.5 rounded hover:bg-zinc-100 ${editor.isActive('codeBlock') ? 'bg-zinc-200 text-black font-mono' : 'text-gray-600'}`}
+            title="代码块"
+          >
+            <Code className="w-4 h-4" />
           </button>
         </div>
+
+        <button
+          onClick={handleSave}
+          disabled={isSaving}
+          className="bg-[#171717] hover:bg-black text-white text-xs px-4 py-1.5 rounded-[6px] font-medium shadow-2xs transition-colors flex items-center gap-1.5"
+        >
+          <Save className="w-3.5 h-3.5 text-emerald-400" />
+          {isSaving ? '保存中...' : '保存文章'}
+        </button>
       </div>
 
-      {/* Editor Toolbar */}
-      <div className="flex items-center gap-1 px-6 py-2 border-b border-vercel-border bg-vercel-neutral text-gray-600 text-xs">
-        <button
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          className={`p-1.5 rounded hover:bg-zinc-200 ${editor.isActive('bold') ? 'bg-zinc-200 text-black' : ''}`}
-        >
-          <Bold className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={`p-1.5 rounded hover:bg-zinc-200 ${editor.isActive('italic') ? 'bg-zinc-200 text-black' : ''}`}
-        >
-          <Italic className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleCode().run()}
-          className={`p-1.5 rounded hover:bg-zinc-200 ${editor.isActive('code') ? 'bg-zinc-200 text-black' : ''}`}
-        >
-          <Code className="w-4 h-4" />
-        </button>
-        <div className="h-4 w-px bg-zinc-300 mx-1" />
-        <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-          className={`p-1.5 rounded hover:bg-zinc-200 ${editor.isActive('heading', { level: 1 }) ? 'bg-zinc-200 text-black' : ''}`}
-        >
-          <Heading1 className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          className={`p-1.5 rounded hover:bg-zinc-200 ${editor.isActive('heading', { level: 2 }) ? 'bg-zinc-200 text-black' : ''}`}
-        >
-          <Heading2 className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={`p-1.5 rounded hover:bg-zinc-200 ${editor.isActive('bulletList') ? 'bg-zinc-200 text-black' : ''}`}
-        >
-          <List className="w-4 h-4" />
-        </button>
-
-        <div className="ml-auto text-xs text-gray-400 flex items-center gap-1 font-mono">
-          <Lock className="w-3 h-3 text-emerald-500" />
-          Hexo Tag Protection On
-        </div>
-      </div>
-
-      {/* Editor Main Content Area */}
+      {/* Editor Content & Drawer Area */}
       <div className="flex-1 flex overflow-hidden relative">
-        <div className="flex-1 overflow-y-auto px-8 py-4 bg-white">
+        <div className="flex-1 overflow-y-auto bg-white">
           <EditorContent editor={editor} />
         </div>
 
@@ -148,21 +154,35 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
               <label className="block text-gray-500 mb-1">标签 (Tags, 逗号分隔)</label>
               <input
                 type="text"
-                value={Array.isArray(meta.tags) ? meta.tags.join(', ') : meta.tags || ''}
-                onChange={(e) =>
-                  setMeta({ ...meta, tags: e.target.value.split(',').map((s) => s.trim()) })
-                }
-                className="w-full bg-white border border-vercel-border rounded-md px-2.5 py-1.5 text-xs outline-none focus:border-vercel-blue"
+                value={tagInput}
+                onChange={(e) => {
+                  const text = e.target.value;
+                  setTagInput(text);
+                  setMeta((prev) => ({
+                    ...prev,
+                    tags: parseCommaList(text),
+                  }));
+                }}
+                placeholder="前端, React"
+                className="w-full bg-white border border-vercel-border rounded-md px-2.5 py-1.5 text-xs outline-none focus:border-vercel-blue font-sans"
               />
             </div>
 
             <div>
-              <label className="block text-gray-500 mb-1">分类 (Categories)</label>
+              <label className="block text-gray-500 mb-1">分类 (Categories, 逗号分隔)</label>
               <input
                 type="text"
-                value={meta.categories || ''}
-                onChange={(e) => setMeta({ ...meta, categories: e.target.value })}
-                className="w-full bg-white border border-vercel-border rounded-md px-2.5 py-1.5 text-xs outline-none focus:border-vercel-blue"
+                value={categoryInput}
+                onChange={(e) => {
+                  const text = e.target.value;
+                  setCategoryInput(text);
+                  setMeta((prev) => ({
+                    ...prev,
+                    categories: parseCommaList(text),
+                  }));
+                }}
+                placeholder="技术分类, 前端干货"
+                className="w-full bg-white border border-vercel-border rounded-md px-2.5 py-1.5 text-xs outline-none focus:border-vercel-blue font-sans"
               />
             </div>
 

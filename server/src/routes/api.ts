@@ -588,15 +588,24 @@ apiRouter.post('/posts/save', (req, res) => {
   try {
     let tagsArray: string[] = [];
     if (Array.isArray(frontMatter.tags)) {
-      tagsArray = frontMatter.tags;
+      tagsArray = frontMatter.tags
+        .flatMap((item: any) => (typeof item === 'string' ? item.split(/[,，]/) : item))
+        .map((s: any) => (typeof s === 'string' ? s.trim() : s))
+        .filter(Boolean);
     } else if (typeof frontMatter.tags === 'string' && frontMatter.tags.trim()) {
-      tagsArray = frontMatter.tags.split(',').map((s: string) => s.trim()).filter(Boolean);
+      tagsArray = frontMatter.tags.split(/[,，]/).map((s: string) => s.trim()).filter(Boolean);
     }
 
-    let categoriesValue: any = frontMatter.categories || [];
-    if (typeof categoriesValue === 'string' && categoriesValue.trim()) {
-      categoriesValue = categoriesValue.split(',').map((s: string) => s.trim()).filter(Boolean);
+    let categoriesValue: any = [];
+    if (Array.isArray(frontMatter.categories)) {
+      categoriesValue = frontMatter.categories
+        .flatMap((item: any) => (typeof item === 'string' ? item.split(/[,，]/) : item))
+        .map((s: any) => (typeof s === 'string' ? s.trim() : s))
+        .filter(Boolean);
+    } else if (typeof frontMatter.categories === 'string' && frontMatter.categories.trim()) {
+      categoriesValue = frontMatter.categories.split(/[,，]/).map((s: string) => s.trim()).filter(Boolean);
     }
+
 
     const meta: Record<string, any> = {
       title: postTitle,

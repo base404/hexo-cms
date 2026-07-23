@@ -1,31 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
-import matter from 'gray-matter';
 import { marked } from 'marked';
 import hljs from 'highlight.js';
 import mermaid from 'mermaid';
 import {
-  Bold,
-  Italic,
-  Code,
-  Heading1,
-  Heading2,
-  List,
-  Lock,
-  FileText,
-  Columns,
+  Save,
   Eye,
-  Edit3,
+  Columns,
+  Code,
+  FileText,
+  Sliders,
   Sparkles,
-  UploadCloud,
   Undo,
   Redo,
-  Bookmark,
-  Send,
+  Upload,
+  CheckCircle2,
+  FileCode,
 } from 'lucide-react';
 
 interface SplitViewMarkdownEditorProps {
   content: string;
-  frontMatter: Record<string, any>;
+  frontMatter?: Record<string, any>;
   onSave: (content: string, frontMatter: Record<string, any>, isDraft?: boolean) => void;
   isSaving?: boolean;
   isDraft?: boolean;
@@ -40,6 +34,8 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
 }) => {
   const [content, setContent] = useState(initialContent);
   const [meta, setMeta] = useState<Record<string, any>>(frontMatter || { title: 'Untitled Post', tags: [], categories: [] });
+  const [tagInput, setTagInput] = useState('');
+  const [categoryInput, setCategoryInput] = useState('');
   const [viewMode, setViewMode] = useState<'split' | 'source' | 'preview'>('split');
   const [showDrawer, setShowDrawer] = useState(false);
   const [renderedHtml, setRenderedHtml] = useState('');
@@ -52,10 +48,26 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
 
   const previewRef = useRef<HTMLDivElement>(null);
 
+  const formatArrayToString = (val: any) => {
+    if (Array.isArray(val)) return val.join(', ');
+    if (typeof val === 'string') return val;
+    return '';
+  };
+
+  const parseCommaList = (text: string): string[] => {
+    return text
+      .split(/[,，]/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+  };
+
   // Sync props when changing posts
   useEffect(() => {
     setContent(initialContent);
-    setMeta(frontMatter || { title: 'Untitled Post', tags: [], categories: [] });
+    const m = frontMatter || { title: 'Untitled Post', tags: [], categories: [] };
+    setMeta(m);
+    setTagInput(formatArrayToString(m.tags));
+    setCategoryInput(formatArrayToString(m.categories));
     historyRef.current = [initialContent];
     historyIndexRef.current = 0;
   }, [initialContent, frontMatter]);
@@ -72,7 +84,6 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
     const currentHistory = historyRef.current.slice(0, historyIndexRef.current + 1);
     if (currentHistory[currentHistory.length - 1] !== newText) {
       currentHistory.push(newText);
-      // Limit history stack size to 50 steps
       if (currentHistory.length > 50) currentHistory.shift();
       historyRef.current = currentHistory;
       historyIndexRef.current = currentHistory.length - 1;
@@ -180,309 +191,183 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
     e.preventDefault();
     setIsDraggingOver(false);
 
-    const files = e.dataTransfer.files;
-    if (!files || files.length === 0) return;
-
-    const file = files[0];
-    const reader = new FileReader();
-
-    reader.onload = (event) => {
-      const rawText = (event.target?.result as string) || '';
-      parseAndImportText(rawText);
-    };
-
-    reader.readAsText(file);
-  };
-
-  // Parse imported text: Gray-matter + auto extract # Title if first line starts with # Title
-  const parseAndImportText = (rawText: string) => {
-    let parsedContent = rawText;
-    let extractedMeta: Record<string, any> = { ...meta };
-
-    if (rawText.trim().startsWith('---')) {
-      try {
-        const parsed = matter(rawText);
-        parsedContent = parsed.content;
-        extractedMeta = { ...extractedMeta, ...parsed.data };
-      } catch {
-        // ignore
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      if (file.name.endsWith('.md') || file.name.endsWith('.txt')) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const text = event.target?.result as string;
+          if (text) {
+            handleContentChange(text);
+          }
+        };
+        reader.readAsText(file);
       }
     }
-
-    const lines = parsedContent.split('\n');
-    let titleFound = false;
-    const cleanLines: string[] = [];
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      if (!titleFound && line.trim().startsWith('# ')) {
-        const titleText = line.trim().replace(/^#\s+/, '').trim();
-        if (titleText) {
-          extractedMeta.title = titleText;
-          titleFound = true;
-          continue;
-        }
-      }
-      cleanLines.push(line);
-    }
-
-    handleContentChange(cleanLines.join('\n').trim());
-    setMeta(extractedMeta);
-  };
-
-  const insertTextAtCursor = (prefix: string, suffix: string = '') => {
-    const textarea = document.getElementById('md-textarea') as HTMLTextAreaElement;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selected = content.substring(start, end);
-    const replacement = prefix + selected + suffix;
-
-    const newContent = content.substring(0, start) + replacement + content.substring(end);
-    handleContentChange(newContent);
-
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + prefix.length, end + prefix.length);
-    }, 50);
   };
 
   return (
     <div
+      className="flex flex-col h-[calc(100vh-140px)] bg-white border border-vercel-border rounded-lg overflow-hidden shadow-sm relative"
       onDragOver={(e) => {
         e.preventDefault();
         setIsDraggingOver(true);
       }}
       onDragLeave={() => setIsDraggingOver(false)}
       onDrop={handleFileDrop}
-      className={`flex flex-col h-full geist-card overflow-hidden relative ${
-        isDraggingOver ? 'ring-2 ring-vercel-blue bg-blue-50/20' : ''
-      }`}
     >
-      {/* Drag Over Overlay Alert */}
+      {/* File Drag & Drop Overlay */}
       {isDraggingOver && (
-        <div className="absolute inset-0 bg-vercel-blue/10 backdrop-blur-xs z-50 flex flex-col items-center justify-center space-y-2 pointer-events-none">
-          <UploadCloud className="w-12 h-12 text-vercel-blue animate-bounce" />
-          <p className="text-sm font-medium text-vercel-blue">松开鼠标即可导入 Markdown / 文本文件</p>
-          <p className="text-xs text-gray-500">（自动提取 # 标题及 Front-matter 元数据）</p>
+        <div className="absolute inset-0 bg-vercel-blue/10 backdrop-blur-xs border-2 border-dashed border-vercel-blue z-50 flex flex-col items-center justify-center text-vercel-blue animate-in fade-in duration-150">
+          <Upload className="w-12 h-12 mb-2 animate-bounce" />
+          <span className="font-medium text-base">拖放 Markdown (.md) 文件至此直接导入</span>
         </div>
       )}
 
-      {/* Top Header */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-vercel-border bg-white">
+      {/* Editor Top Bar Toolbar */}
+      <div className="flex items-center justify-between px-4 py-2.5 bg-vercel-neutral border-b border-vercel-border select-none">
         <div className="flex items-center gap-3">
           <input
             type="text"
             value={meta.title || ''}
             onChange={(e) => setMeta({ ...meta, title: e.target.value })}
-            placeholder="文章标题..."
-            className="text-xl font-medium tracking-tight bg-transparent border-none outline-none text-vercel-black placeholder-gray-400 w-80"
+            placeholder="输入文章标题..."
+            className="text-base font-semibold bg-transparent text-vercel-black placeholder-gray-400 outline-none w-72 focus:w-96 transition-all"
           />
-          {isDraft ? (
-            <span className="label-caps bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-sm font-semibold text-[10px]">
-              📝 草稿 (DRAFT)
-            </span>
-          ) : (
-            <span className="label-caps bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-sm font-semibold text-[10px]">
-              🚀 已发布 (POST)
-            </span>
-          )}
+
+          <div className="flex items-center gap-1">
+            {isDraft && (
+              <span className="label-caps text-[10px] bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded font-mono">
+                草稿 DRAFT
+              </span>
+            )}
+            <button
+              onClick={() => setShowDrawer(!showDrawer)}
+              className={`btn-secondary text-xs py-1 px-2.5 flex items-center gap-1 transition-colors ${
+                showDrawer ? 'bg-zinc-200 text-black font-semibold' : ''
+              }`}
+              title="设置文章属性与 Front-matter"
+            >
+              <Sliders className="w-3.5 h-3.5" />
+              元数据
+            </button>
+          </div>
         </div>
 
-        {/* View Switcher & Action buttons */}
+        {/* Action Controls & View Switcher */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center bg-zinc-100 p-0.5 rounded-md border border-zinc-200 text-xs">
+          {/* Undo / Redo buttons */}
+          <div className="flex items-center bg-white border border-vercel-border rounded-md p-0.5">
+            <button
+              onClick={handleUndo}
+              disabled={historyIndexRef.current <= 0}
+              className="p-1 hover:bg-zinc-100 rounded disabled:opacity-30 transition-colors"
+              title="撤销 (Ctrl+Z)"
+            >
+              <Undo className="w-3.5 h-3.5 text-gray-700" />
+            </button>
+            <button
+              onClick={handleRedo}
+              disabled={historyIndexRef.current >= historyRef.current.length - 1}
+              className="p-1 hover:bg-zinc-100 rounded disabled:opacity-30 transition-colors"
+              title="重做 (Ctrl+Y)"
+            >
+              <Redo className="w-3.5 h-3.5 text-gray-700" />
+            </button>
+          </div>
+
+          {/* Mode Segment Switcher */}
+          <div className="flex items-center bg-zinc-100 p-0.5 rounded-md border border-vercel-border text-xs">
             <button
               onClick={() => setViewMode('split')}
               className={`flex items-center gap-1 px-2.5 py-1 rounded-sm transition-all ${
-                viewMode === 'split' ? 'bg-white shadow-sm font-semibold text-black' : 'text-gray-500'
+                viewMode === 'split' ? 'bg-white shadow-2xs font-medium text-black' : 'text-gray-500'
               }`}
             >
-              <Columns className="w-3.5 h-3.5" />
-              左右分屏
+              <Columns className="w-3.5 h-3.5" /> 双栏分屏
             </button>
             <button
               onClick={() => setViewMode('source')}
               className={`flex items-center gap-1 px-2.5 py-1 rounded-sm transition-all ${
-                viewMode === 'source' ? 'bg-white shadow-sm font-semibold text-black' : 'text-gray-500'
+                viewMode === 'source' ? 'bg-white shadow-2xs font-medium text-black' : 'text-gray-500'
               }`}
             >
-              <Edit3 className="w-3.5 h-3.5" />
-              源码
+              <Code className="w-3.5 h-3.5" /> 纯源码
             </button>
             <button
               onClick={() => setViewMode('preview')}
               className={`flex items-center gap-1 px-2.5 py-1 rounded-sm transition-all ${
-                viewMode === 'preview' ? 'bg-white shadow-sm font-semibold text-black' : 'text-gray-500'
+                viewMode === 'preview' ? 'bg-white shadow-2xs font-medium text-black' : 'text-gray-500'
               }`}
             >
-              <Eye className="w-3.5 h-3.5" />
-              实时渲染
+              <Eye className="w-3.5 h-3.5" /> 纯预览
             </button>
           </div>
 
-          <button
-            onClick={() => setShowDrawer(!showDrawer)}
-            className="btn-secondary flex items-center gap-1.5 text-xs"
-          >
-            <FileText className="w-3.5 h-3.5" />
-            Front-matter
-          </button>
-
-          {/* Stash / Save as Draft Button */}
-          <button
-            onClick={() => onSave(content, meta, true)}
-            disabled={isSaving}
-            className="btn-secondary text-xs px-4 py-1.5 flex items-center gap-1.5 text-amber-800 bg-amber-50 border-amber-300 hover:bg-amber-100 shadow-2xs font-medium"
-            title="暂存保存为 Hexo 草稿 (source/_drafts)"
-          >
-            <Bookmark className="w-3.5 h-3.5 text-amber-600" />
-            暂存草稿
-          </button>
-
-          {/* Save / Publish Article Button */}
-          <button
-            onClick={() => onSave(content, meta, false)}
-            disabled={isSaving}
-            className="btn-primary-pill text-xs px-5 py-1.5 flex items-center gap-1.5 shadow-sm"
-            title="正式发布文章 (Ctrl+S)"
-          >
-            <Send className="w-3.5 h-3.5 text-emerald-400" />
-            {isSaving ? '保存中...' : '发布文章 (Ctrl+S)'}
-          </button>
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onSave(content, meta, true)}
+              disabled={isSaving}
+              className="bg-white border border-zinc-200 hover:bg-zinc-50 text-[#171717] text-xs px-3 py-1.5 rounded-[6px] font-medium transition-colors flex items-center gap-1.5"
+            >
+              <FileCode className="w-3.5 h-3.5 text-amber-600" /> 存为草稿
+            </button>
+            <button
+              onClick={() => onSave(content, meta, false)}
+              disabled={isSaving}
+              className="bg-[#171717] hover:bg-black text-white text-xs px-4 py-1.5 rounded-[6px] font-medium shadow-2xs transition-colors flex items-center gap-1.5"
+            >
+              <Save className="w-3.5 h-3.5 text-emerald-400" />
+              {isSaving ? '保存中...' : '发布文章'}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Formatting Quick Bar */}
-      <div className="flex items-center gap-1.5 px-6 py-2 border-b border-vercel-border bg-vercel-neutral text-gray-600 text-xs">
-        {/* Undo / Redo buttons */}
-        <button
-          onClick={handleUndo}
-          disabled={historyIndexRef.current <= 0}
-          className="p-1.5 hover:bg-zinc-200 rounded disabled:opacity-40"
-          title="撤销 (Ctrl+Z)"
-        >
-          <Undo className="w-3.5 h-3.5" />
-        </button>
-        <button
-          onClick={handleRedo}
-          disabled={historyIndexRef.current >= historyRef.current.length - 1}
-          className="p-1.5 hover:bg-zinc-200 rounded disabled:opacity-40"
-          title="重做 (Ctrl+Y / Ctrl+Shift+Z)"
-        >
-          <Redo className="w-3.5 h-3.5" />
-        </button>
-
-        <div className="w-px h-4 bg-zinc-300 mx-1" />
-
-        <button
-          onClick={() => insertTextAtCursor('**', '**')}
-          className="p-1.5 hover:bg-zinc-200 rounded"
-          title="加粗"
-        >
-          <Bold className="w-3.5 h-3.5" />
-        </button>
-        <button
-          onClick={() => insertTextAtCursor('*', '*')}
-          className="p-1.5 hover:bg-zinc-200 rounded"
-          title="斜体"
-        >
-          <Italic className="w-3.5 h-3.5" />
-        </button>
-        <button
-          onClick={() => insertTextAtCursor('`', '`')}
-          className="p-1.5 hover:bg-zinc-200 rounded"
-          title="行内代码"
-        >
-          <Code className="w-3.5 h-3.5" />
-        </button>
-
-        <div className="w-px h-4 bg-zinc-300 mx-1" />
-
-        <button
-          onClick={() => insertTextAtCursor('# ')}
-          className="p-1.5 hover:bg-zinc-200 rounded"
-          title="一级标题"
-        >
-          <Heading1 className="w-3.5 h-3.5" />
-        </button>
-        <button
-          onClick={() => insertTextAtCursor('## ')}
-          className="p-1.5 hover:bg-zinc-200 rounded"
-          title="二级标题"
-        >
-          <Heading2 className="w-3.5 h-3.5" />
-        </button>
-        <button
-          onClick={() => insertTextAtCursor('- ')}
-          className="p-1.5 hover:bg-zinc-200 rounded"
-          title="无序列表"
-        >
-          <List className="w-3.5 h-3.5" />
-        </button>
-
-        <div className="w-px h-4 bg-zinc-300 mx-1" />
-
-        {/* Hexo Tag Shortcut insertion */}
-        <button
-          onClick={() => insertTextAtCursor('{% codeblock %}\n', '\n{% endcodeblock %}')}
-          className="px-2 py-1 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded text-[11px] font-mono flex items-center gap-1 border border-purple-200"
-          title="插入 Hexo 原生代码块标签"
-        >
-          <Sparkles className="w-3 h-3 text-purple-500" />
-          Hexo Codeblock
-        </button>
-        <button
-          onClick={() => insertTextAtCursor('{% quote %}\n', '\n{% endquote %}')}
-          className="px-2 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded text-[11px] font-mono flex items-center gap-1 border border-blue-200"
-          title="插入 Hexo 引用块标签"
-        >
-          <Sparkles className="w-3 h-3 text-blue-500" />
-          Hexo Quote
-        </button>
-      </div>
-
-      {/* Main Workspace split */}
+      {/* Main Split Area */}
       <div className="flex-1 flex overflow-hidden relative">
-        {/* Left Side: Markdown Source Editor */}
+        {/* Left Markdown Source Code Editor */}
         {(viewMode === 'split' || viewMode === 'source') && (
-          <div className="flex-1 flex flex-col border-r border-vercel-border bg-white overflow-hidden">
+          <div className={`h-full flex flex-col ${viewMode === 'split' ? 'w-1/2 border-r border-vercel-border' : 'w-full'}`}>
             <textarea
-              id="md-textarea"
               value={content}
               onChange={(e) => handleContentChange(e.target.value)}
-              placeholder="在此输入 Markdown 正文内容..."
-              className="w-full h-full p-6 bg-transparent outline-none resize-none font-mono text-xs leading-relaxed text-vercel-black"
+              placeholder="开始编写 Markdown 内容..."
+              className="w-full h-full p-4 font-mono text-xs text-vercel-black bg-white outline-none resize-none leading-relaxed select-text"
+              spellCheck={false}
             />
           </div>
         )}
 
-        {/* Right Side: Live HTML Rendered View */}
+        {/* Right Live Preview Area */}
         {(viewMode === 'split' || viewMode === 'preview') && (
-          <div className="flex-1 p-6 bg-white overflow-y-auto font-sans leading-relaxed text-vercel-black">
-            <div
-              ref={previewRef}
-              dangerouslySetInnerHTML={{ __html: renderedHtml }}
-              className="prose prose-sm max-w-none prose-headings:font-semibold prose-a:text-vercel-blue prose-pre:bg-zinc-950 prose-pre:text-zinc-100"
-            />
-          </div>
+          <div
+            ref={previewRef}
+            className={`h-full overflow-y-auto p-6 bg-white markdown-body ${
+              viewMode === 'split' ? 'w-1/2' : 'w-full'
+            }`}
+            dangerouslySetInnerHTML={{ __html: renderedHtml }}
+          />
         )}
 
-        {/* Drawer: Front-matter Editor Modal */}
+        {/* Front-Matter Drawer Side Overlay */}
         {showDrawer && (
-          <div className="absolute right-0 top-0 bottom-0 w-80 bg-white border-l border-vercel-border shadow-xl p-6 z-30 space-y-4 font-sans text-xs overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-vercel-border pb-3">
-              <h3 className="font-semibold text-sm text-vercel-black">Front-matter 元数据</h3>
-              <button
-                onClick={() => setShowDrawer(false)}
-                className="text-gray-400 hover:text-black font-semibold text-sm"
-              >
-                ✕
-              </button>
-            </div>
+          <div className="absolute top-0 right-0 bottom-0 w-80 bg-white border-l border-vercel-border shadow-xl z-20 p-5 flex flex-col justify-between animate-in slide-in-from-right duration-200">
+            <div className="space-y-4 text-xs">
+              <div className="flex items-center justify-between border-b border-vercel-border pb-3">
+                <span className="font-semibold text-sm text-vercel-black flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-vercel-blue" />
+                  Front-matter 元数据
+                </span>
+                <button
+                  onClick={() => setShowDrawer(false)}
+                  className="text-gray-400 hover:text-black p-1 rounded"
+                >
+                  ✕
+                </button>
+              </div>
 
-            <div className="space-y-3">
               <div className="space-y-1">
                 <label className="font-medium text-gray-700">文章标题 (title)</label>
                 <input
@@ -507,15 +392,17 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
                 <label className="font-medium text-gray-700">标签 (tags, 逗号分隔)</label>
                 <input
                   type="text"
-                  value={Array.isArray(meta.tags) ? meta.tags.join(', ') : meta.tags || ''}
-                  onChange={(e) =>
-                    setMeta({
-                      ...meta,
-                      tags: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
-                    })
-                  }
+                  value={tagInput}
+                  onChange={(e) => {
+                    const text = e.target.value;
+                    setTagInput(text);
+                    setMeta((prev) => ({
+                      ...prev,
+                      tags: parseCommaList(text),
+                    }));
+                  }}
                   placeholder="前端, React, Vite"
-                  className="w-full bg-white border border-vercel-border rounded px-2.5 py-1.5 outline-none focus:border-vercel-blue"
+                  className="w-full bg-white border border-vercel-border rounded px-2.5 py-1.5 outline-none focus:border-vercel-blue font-sans text-xs"
                 />
               </div>
 
@@ -523,19 +410,17 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
                 <label className="font-medium text-gray-700">分类 (categories, 逗号分隔)</label>
                 <input
                   type="text"
-                  value={
-                    Array.isArray(meta.categories)
-                      ? meta.categories.join(', ')
-                      : meta.categories || ''
-                  }
-                  onChange={(e) =>
-                    setMeta({
-                      ...meta,
-                      categories: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
-                    })
-                  }
-                  placeholder="技术干货"
-                  className="w-full bg-white border border-vercel-border rounded px-2.5 py-1.5 outline-none focus:border-vercel-blue"
+                  value={categoryInput}
+                  onChange={(e) => {
+                    const text = e.target.value;
+                    setCategoryInput(text);
+                    setMeta((prev) => ({
+                      ...prev,
+                      categories: parseCommaList(text),
+                    }));
+                  }}
+                  placeholder="技术分类, 前端干货"
+                  className="w-full bg-white border border-vercel-border rounded px-2.5 py-1.5 outline-none focus:border-vercel-blue font-sans text-xs"
                 />
               </div>
 
