@@ -341,9 +341,34 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
     handleContentChange(cleanText);
   };
 
+  const dragCounter = useRef(0);
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current += 1;
+    if (dragCounter.current === 1) {
+      setIsDraggingOver(true);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current -= 1;
+    if (dragCounter.current <= 0) {
+      dragCounter.current = 0;
+      setIsDraggingOver(false);
+    }
+  };
+
   // Handle Drag and Drop Markdown / Text File Import
   const handleFileDrop = (e: React.DragEvent) => {
     e.preventDefault();
+    dragCounter.current = 0;
     setIsDraggingOver(false);
 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
@@ -367,16 +392,14 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
   return (
     <div
       className="flex flex-col h-[calc(100vh-140px)] bg-white border border-vercel-border rounded-lg overflow-hidden shadow-sm relative"
-      onDragOver={(e) => {
-        e.preventDefault();
-        setIsDraggingOver(true);
-      }}
-      onDragLeave={() => setIsDraggingOver(false)}
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
       onDrop={handleFileDrop}
     >
       {/* File Drag & Drop Overlay */}
       {isDraggingOver && (
-        <div className="absolute inset-0 bg-vercel-blue/10 backdrop-blur-xs border-2 border-dashed border-vercel-blue z-50 flex flex-col items-center justify-center text-vercel-blue animate-in fade-in duration-150">
+        <div className="absolute inset-0 bg-vercel-blue/10 backdrop-blur-xs border-2 border-dashed border-vercel-blue z-50 flex flex-col items-center justify-center text-vercel-blue pointer-events-none transition-all duration-150">
           <Upload className="w-12 h-12 mb-2 animate-bounce" />
           <span className="font-medium text-base">拖放 Markdown (.md) 文件至此直接导入</span>
         </div>
