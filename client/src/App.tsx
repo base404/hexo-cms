@@ -242,9 +242,6 @@ const MainApp: React.FC = () => {
                 ▲
               </div>
               <span className="font-semibold text-sm tracking-tight text-vercel-black">Hexo CMS</span>
-              <span className="label-caps bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-sm text-[10px]">
-                ZERO-CLI
-              </span>
             </div>
 
             {/* Nav Tabs */}
