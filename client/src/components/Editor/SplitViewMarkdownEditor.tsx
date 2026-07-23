@@ -427,12 +427,28 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
                 />
               </div>
 
-              {/* Tags Section with Pills Selector */}
+              {/* Tags Section with Dropdown & Pills Selector */}
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="font-medium text-gray-700">标签 (tags, 逗号分隔)</label>
-                  <span className="text-[10px] text-gray-400 font-mono">点击下方快速选择</span>
-                </div>
+                <label className="font-medium text-gray-700">标签 (tags, 逗号分隔)</label>
+
+                {/* Dropdown Select Menu */}
+                <select
+                  className="w-full bg-white border border-zinc-200 rounded px-2.5 py-1.5 text-xs outline-none focus:border-vercel-blue font-sans shadow-2xs"
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      toggleTagItem(e.target.value);
+                      e.target.value = '';
+                    }
+                  }}
+                >
+                  <option value="">-- 选择已有标签 ({availableTags.length}) --</option>
+                  {availableTags.map((t) => (
+                    <option key={t.name} value={t.name}>
+                      #{t.name} ({t.count} 篇)
+                    </option>
+                  ))}
+                </select>
+
                 <input
                   type="text"
                   value={tagInput}
@@ -471,12 +487,28 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
                 )}
               </div>
 
-              {/* Categories Section with Pills Selector */}
+              {/* Categories Section with Dropdown & Pills Selector */}
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="font-medium text-gray-700">分类 (categories, 逗号分隔)</label>
-                  <span className="text-[10px] text-gray-400 font-mono">点击下方快速选择</span>
-                </div>
+                <label className="font-medium text-gray-700">分类 (categories, 逗号分隔)</label>
+
+                {/* Dropdown Select Menu */}
+                <select
+                  className="w-full bg-white border border-zinc-200 rounded px-2.5 py-1.5 text-xs outline-none focus:border-vercel-blue font-sans shadow-2xs"
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      toggleCategoryItem(e.target.value);
+                      e.target.value = '';
+                    }
+                  }}
+                >
+                  <option value="">-- 选择已有分类 ({availableCategories.length}) --</option>
+                  {availableCategories.map((c) => (
+                    <option key={c.name} value={c.name}>
+                      📁 {c.name} ({c.count} 篇)
+                    </option>
+                  ))}
+                </select>
+
                 <input
                   type="text"
                   value={categoryInput}

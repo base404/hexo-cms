@@ -14,6 +14,64 @@ export interface TaxonomiesResult {
 
 export class TaxonomyService {
   /**
+   * Safe path to custom presets file: source/_custom/taxonomy.json
+   */
+  private static getCustomTaxonomyFilePath(blogDir: string): string {
+    const customDir = path.join(blogDir, 'source', '_custom');
+    if (!fs.existsSync(customDir)) {
+      try {
+        fs.mkdirSync(customDir, { recursive: true });
+      } catch {}
+    }
+    return path.join(customDir, 'taxonomy.json');
+  }
+
+  /**
+   * Load custom preset categories & tags from JSON file
+   */
+  private static getCustomTaxonomies(blogDir: string): { categories: string[]; tags: string[] } {
+    try {
+      const filePath = this.getCustomTaxonomyFilePath(blogDir);
+      if (fs.existsSync(filePath)) {
+        const raw = fs.readFileSync(filePath, 'utf8');
+        const data = JSON.parse(raw);
+        return {
+          categories: Array.isArray(data.categories) ? data.categories : [],
+          tags: Array.isArray(data.tags) ? data.tags : [],
+        };
+      }
+    } catch {}
+    return { categories: [], tags: [] };
+  }
+
+  /**
+   * Save custom preset categories & tags to JSON file
+   */
+  public static addCustomTaxonomy(blogDir: string, type: 'category' | 'tag', name: string): { success: boolean } {
+    const current = this.getCustomTaxonomies(blogDir);
+    const trimmed = name.trim();
+    if (!trimmed) return { success: false };
+
+    if (type === 'category') {
+      if (!current.categories.includes(trimmed)) {
+        current.categories.push(trimmed);
+      }
+    } else if (type === 'tag') {
+      if (!current.tags.includes(trimmed)) {
+        current.tags.push(trimmed);
+      }
+    }
+
+    try {
+      const filePath = this.getCustomTaxonomyFilePath(blogDir);
+      fs.writeFileSync(filePath, JSON.stringify(current, null, 2), 'utf8');
+      return { success: true };
+    } catch {
+      return { success: false };
+    }
+  }
+
+  /**
    * Helper to scan all Markdown files under source/_posts and source/_drafts
    */
   private static getAllMarkdownFiles(blogDir: string): string[] {
@@ -63,6 +121,11 @@ export class TaxonomyService {
     const categoryCountMap = new Map<string, number>();
     const tagCountMap = new Map<string, number>();
 
+    // Load custom presets
+    const custom = this.getCustomTaxonomies(blogDir);
+    custom.categories.forEach((cat) => categoryCountMap.set(cat, 0));
+    custom.tags.forEach((tag) => tagCountMap.set(tag, 0));
+
     files.forEach((filePath) => {
       try {
         const raw = fs.readFileSync(filePath, 'utf8');
@@ -107,6 +170,18 @@ export class TaxonomyService {
       return { updatedFilesCount: 0 };
     }
 
+    // Rename in custom presets if exists
+    const custom = this.getCustomTaxonomies(blogDir);
+    if (type === 'category') {
+      custom.categories = custom.categories.map((c) => (c === oldName ? newName : c));
+    } else if (type === 'tag') {
+      custom.tags = custom.tags.map((t) => (t === oldName ? newName : t));
+    }
+    try {
+      const filePath = this.getCustomTaxonomyFilePath(blogDir);
+      fs.writeFileSync(filePath, JSON.stringify(custom, null, 2), 'utf8');
+    } catch {}
+
     const files = this.getAllMarkdownFiles(blogDir);
     let updatedFilesCount = 0;
 
@@ -121,7 +196,6 @@ export class TaxonomyService {
           const cats = this.normalizeToArray(data.categories);
           if (cats.includes(oldName)) {
             data.categories = cats.map((c) => (c === oldName ? newName : c));
-            // Deduplicate categories
             data.categories = Array.from(new Set(data.categories));
             modified = true;
           }
@@ -129,7 +203,6 @@ export class TaxonomyService {
           const tags = this.normalizeToArray(data.tags);
           if (tags.includes(oldName)) {
             data.tags = tags.map((t) => (t === oldName ? newName : t));
-            // Deduplicate tags
             data.tags = Array.from(new Set(data.tags));
             modified = true;
           }
@@ -159,6 +232,18 @@ export class TaxonomyService {
     if (!targetName) {
       return { updatedFilesCount: 0 };
     }
+
+    // Remove from custom presets
+    const custom = this.getCustomTaxonomies(blogDir);
+    if (type === 'category') {
+      custom.categories = custom.categories.filter((c) => c !== targetName);
+    } else if (type === 'tag') {
+      custom.tags = custom.tags.filter((t) => t !== targetName);
+    }
+    try {
+      const filePath = this.getCustomTaxonomyFilePath(blogDir);
+      fs.writeFileSync(filePath, JSON.stringify(custom, null, 2), 'utf8');
+    } catch {}
 
     const files = this.getAllMarkdownFiles(blogDir);
     let updatedFilesCount = 0;

@@ -116,18 +116,25 @@ export const TaxonomyManager: React.FC = () => {
         showToast(`操作失败: ${e.message}`, 'error');
       }
     } else {
-      // Create new tag / category (Local UI update)
-      if (modal.type === 'category') {
-        if (!categories.some((c) => c.name === trimmed)) {
-          setCategories((prev) => [...prev, { name: trimmed, count: 0 }]);
+      try {
+        const res = await fetch('/api/taxonomy/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: modal.type,
+            name: trimmed,
+          }),
+        });
+        if (res.ok) {
+          showToast(`已新建预设${modal.type === 'category' ? '分类' : '标签'}《${trimmed}》！已同步存入配置。`, 'success');
+          fetchTaxonomies();
+          setModal((prev) => ({ ...prev, show: false }));
+        } else {
+          showToast('新建失败', 'error');
         }
-      } else {
-        if (!tags.some((t) => t.name === trimmed)) {
-          setTags((prev) => [...prev, { name: trimmed, count: 0 }]);
-        }
+      } catch (e: any) {
+        showToast(`新建异常: ${e.message}`, 'error');
       }
-      showToast(`已新建预设${modal.type === 'category' ? '分类' : '标签'}《${trimmed}》！可于编辑器中直接选择。`, 'success');
-      setModal((prev) => ({ ...prev, show: false }));
     }
   };
 

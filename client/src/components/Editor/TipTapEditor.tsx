@@ -188,11 +188,25 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
           <div className="w-80 border-l border-vercel-border bg-vercel-neutral p-4 flex flex-col gap-4 text-xs font-mono overflow-y-auto">
             <h3 className="label-caps text-gray-500">Front-matter 元数据配置</h3>
 
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-gray-500">标签 (Tags)</label>
-                <span className="text-[10px] text-gray-400">点击下方快速选择</span>
-              </div>
+            <div className="space-y-1">
+              <label className="text-gray-500">标签 (Tags)</label>
+              <select
+                className="w-full bg-white border border-zinc-200 rounded px-2.5 py-1.5 text-xs outline-none focus:border-vercel-blue font-sans shadow-2xs"
+                onChange={(e) => {
+                  if (e.target.value) {
+                    toggleTagItem(e.target.value);
+                    e.target.value = '';
+                  }
+                }}
+              >
+                <option value="">-- 选择已有标签 ({availableTags.length}) --</option>
+                {availableTags.map((t) => (
+                  <option key={t.name} value={t.name}>
+                    #{t.name} ({t.count} 篇)
+                  </option>
+                ))}
+              </select>
+
               <input
                 type="text"
                 value={tagInput}
@@ -231,11 +245,25 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
               )}
             </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-gray-500">分类 (Categories)</label>
-                <span className="text-[10px] text-gray-400">点击下方快速选择</span>
-              </div>
+            <div className="space-y-1">
+              <label className="text-gray-500">分类 (Categories)</label>
+              <select
+                className="w-full bg-white border border-zinc-200 rounded px-2.5 py-1.5 text-xs outline-none focus:border-vercel-blue font-sans shadow-2xs"
+                onChange={(e) => {
+                  if (e.target.value) {
+                    toggleCategoryItem(e.target.value);
+                    e.target.value = '';
+                  }
+                }}
+              >
+                <option value="">-- 选择已有分类 ({availableCategories.length}) --</option>
+                {availableCategories.map((c) => (
+                  <option key={c.name} value={c.name}>
+                    📁 {c.name} ({c.count} 篇)
+                  </option>
+                ))}
+              </select>
+
               <input
                 type="text"
                 value={categoryInput}
