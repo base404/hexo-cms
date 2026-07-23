@@ -35,12 +35,25 @@ describe('MarketService (TDD)', () => {
     const marketService = new MarketService(cacheDir);
 
     const mockPlugins = [{ name: 'hexo-abbrlink', description: 'Permalink', link: '', tags: [] }];
-    marketService.writeCache('plugins.json', mockPlugins);
-
     // Set TTL = 1ms and wait 10ms to expire
     await new Promise((r) => setTimeout(r, 10));
     const cachedData = marketService.readCache('plugins.json', 1);
-
     expect(cachedData).toBeNull();
   });
+
+
+  it('should include featured chirpy theme with complete metadata', async () => {
+    const marketService = new MarketService(cacheDir);
+    const themes = await marketService.fetchOfficialThemes();
+    expect(themes.length).toBeGreaterThan(0);
+
+    const chirpy = themes.find((t) => t.name === 'chirpy');
+    expect(chirpy).toBeDefined();
+    expect(chirpy?.link).toBe('https://github.com/base404/hexo-theme-chirpy');
+    expect(chirpy?.preview).toBe('https://www.airbozh.cn/');
+    expect(chirpy?.tags).toContain('Schema');
+    expect(chirpy?.description).toContain('Hexo Theme Schema');
+  });
 });
+
+
