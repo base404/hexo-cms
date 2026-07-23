@@ -163,7 +163,11 @@ const MainApp: React.FC = () => {
     changeActiveTab('editor');
   };
 
-  const handleSavePost = async (updatedContent: string, updatedFrontMatter: Record<string, any>) => {
+  const handleSavePost = async (
+    updatedContent: string,
+    updatedFrontMatter: Record<string, any>,
+    isDraft: boolean = false
+  ) => {
     try {
       const response = await fetch('/api/posts/save', {
         method: 'POST',
@@ -172,9 +176,10 @@ const MainApp: React.FC = () => {
           title: updatedFrontMatter.title || editingPost.title,
           content: updatedContent,
           frontMatter: updatedFrontMatter,
-          isDraft: false,
+          isDraft: isDraft,
           readMtime: editingPost.readMtime,
           originalFilename: editingPost.originalFilename,
+          originalFilePath: editingPost.fullPath,
         }),
       });
 
@@ -185,12 +190,17 @@ const MainApp: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setEditingPost((prev) => ({
+        setEditingPost((prev: any) => ({
           ...prev,
           originalFilename: data.filename,
+          fullPath: data.filePath,
           readMtime: data.newMtime,
+          isDraft: isDraft,
         }));
-        showToast(`文章《${data.meta.title}》已物理落盘保存成功！`, 'success', '物理文件已更新');
+        const msg = isDraft
+          ? `文章《${data.meta.title}》已成功暂存为 Hexo 草稿 (source/_drafts)！`
+          : `文章《${data.meta.title}》已成功保存发布 (source/_posts)！`;
+        showToast(msg, 'success', isDraft ? '已暂存为草稿' : '文章已发布');
       } else {
         showToast('保存文章失败', 'error');
       }
@@ -349,6 +359,7 @@ const MainApp: React.FC = () => {
                     content={editingPost.content}
                     frontMatter={editingPost.frontMatter}
                     onSave={handleSavePost}
+                    isDraft={editingPost.isDraft}
                   />
                 </div>
               </div>

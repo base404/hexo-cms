@@ -19,13 +19,16 @@ import {
   UploadCloud,
   Undo,
   Redo,
+  Bookmark,
+  Send,
 } from 'lucide-react';
 
 interface SplitViewMarkdownEditorProps {
   content: string;
   frontMatter: Record<string, any>;
-  onSave: (content: string, frontMatter: Record<string, any>) => void;
+  onSave: (content: string, frontMatter: Record<string, any>, isDraft?: boolean) => void;
   isSaving?: boolean;
+  isDraft?: boolean;
 }
 
 export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = ({
@@ -33,6 +36,7 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
   frontMatter,
   onSave,
   isSaving = false,
+  isDraft = false,
 }) => {
   const [content, setContent] = useState(initialContent);
   const [meta, setMeta] = useState<Record<string, any>>(frontMatter || { title: 'Untitled Post', tags: [], categories: [] });
@@ -93,7 +97,7 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
     }
   };
 
-  // Keyboard Shortcuts: Ctrl+S (Save), Ctrl+Z (Undo), Ctrl+Y / Ctrl+Shift+Z (Redo)
+  // Keyboard Shortcuts: Ctrl+S (Save/Publish), Ctrl+Z (Undo), Ctrl+Y / Ctrl+Shift+Z (Redo)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const isCtrlOrCmd = e.ctrlKey || e.metaKey;
@@ -101,7 +105,7 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
 
       if (isCtrlOrCmd && key === 's') {
         e.preventDefault();
-        onSave(content, meta);
+        onSave(content, meta, false);
       } else if (isCtrlOrCmd && key === 'z') {
         e.preventDefault();
         if (e.shiftKey) {
@@ -275,9 +279,15 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
             placeholder="文章标题..."
             className="text-xl font-medium tracking-tight bg-transparent border-none outline-none text-vercel-black placeholder-gray-400 w-80"
           />
-          <span className="label-caps bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-sm">
-            {meta.published !== false ? 'POST' : 'DRAFT'}
-          </span>
+          {isDraft ? (
+            <span className="label-caps bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-sm font-semibold text-[10px]">
+              📝 草稿 (DRAFT)
+            </span>
+          ) : (
+            <span className="label-caps bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-sm font-semibold text-[10px]">
+              🚀 已发布 (POST)
+            </span>
+          )}
         </div>
 
         {/* View Switcher & Action buttons */}
@@ -320,13 +330,26 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
             Front-matter
           </button>
 
+          {/* Stash / Save as Draft Button */}
           <button
-            onClick={() => onSave(content, meta)}
+            onClick={() => onSave(content, meta, true)}
             disabled={isSaving}
-            className="btn-primary-pill text-xs px-5 py-1.5"
-            title="快捷键 Ctrl+S / Cmd+S"
+            className="btn-secondary text-xs px-4 py-1.5 flex items-center gap-1.5 text-amber-800 bg-amber-50 border-amber-300 hover:bg-amber-100 shadow-2xs font-medium"
+            title="暂存保存为 Hexo 草稿 (source/_drafts)"
           >
-            {isSaving ? '保存中...' : '保存文章 (Ctrl+S)'}
+            <Bookmark className="w-3.5 h-3.5 text-amber-600" />
+            暂存草稿
+          </button>
+
+          {/* Save / Publish Article Button */}
+          <button
+            onClick={() => onSave(content, meta, false)}
+            disabled={isSaving}
+            className="btn-primary-pill text-xs px-5 py-1.5 flex items-center gap-1.5 shadow-sm"
+            title="正式发布文章 (Ctrl+S)"
+          >
+            <Send className="w-3.5 h-3.5 text-emerald-400" />
+            {isSaving ? '保存中...' : '发布文章 (Ctrl+S)'}
           </button>
         </div>
       </div>
@@ -351,142 +374,181 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
           <Redo className="w-3.5 h-3.5" />
         </button>
 
-        <div className="h-4 w-px bg-zinc-300 mx-1" />
+        <div className="w-px h-4 bg-zinc-300 mx-1" />
 
-        <button
-          onClick={() => insertTextAtCursor('# ')}
-          className="px-2 py-1 hover:bg-zinc-200 rounded font-semibold text-xs flex items-center gap-0.5"
-        >
-          <Heading1 className="w-3.5 h-3.5" /> H1
-        </button>
-        <button
-          onClick={() => insertTextAtCursor('## ')}
-          className="px-2 py-1 hover:bg-zinc-200 rounded font-semibold text-xs flex items-center gap-0.5"
-        >
-          <Heading2 className="w-3.5 h-3.5" /> H2
-        </button>
         <button
           onClick={() => insertTextAtCursor('**', '**')}
           className="p-1.5 hover:bg-zinc-200 rounded"
+          title="加粗"
         >
           <Bold className="w-3.5 h-3.5" />
         </button>
         <button
           onClick={() => insertTextAtCursor('*', '*')}
           className="p-1.5 hover:bg-zinc-200 rounded"
+          title="斜体"
         >
           <Italic className="w-3.5 h-3.5" />
         </button>
         <button
-          onClick={() => insertTextAtCursor('```javascript\n', '\n```')}
+          onClick={() => insertTextAtCursor('`', '`')}
           className="p-1.5 hover:bg-zinc-200 rounded"
+          title="行内代码"
         >
           <Code className="w-3.5 h-3.5" />
+        </button>
+
+        <div className="w-px h-4 bg-zinc-300 mx-1" />
+
+        <button
+          onClick={() => insertTextAtCursor('# ')}
+          className="p-1.5 hover:bg-zinc-200 rounded"
+          title="一级标题"
+        >
+          <Heading1 className="w-3.5 h-3.5" />
+        </button>
+        <button
+          onClick={() => insertTextAtCursor('## ')}
+          className="p-1.5 hover:bg-zinc-200 rounded"
+          title="二级标题"
+        >
+          <Heading2 className="w-3.5 h-3.5" />
         </button>
         <button
           onClick={() => insertTextAtCursor('- ')}
           className="p-1.5 hover:bg-zinc-200 rounded"
+          title="无序列表"
         >
           <List className="w-3.5 h-3.5" />
         </button>
-        <div className="h-4 w-px bg-zinc-300 mx-1" />
+
+        <div className="w-px h-4 bg-zinc-300 mx-1" />
+
+        {/* Hexo Tag Shortcut insertion */}
         <button
           onClick={() => insertTextAtCursor('{% codeblock %}\n', '\n{% endcodeblock %}')}
-          className="px-2 py-1 bg-zinc-200 hover:bg-zinc-300 text-zinc-800 rounded font-mono text-[11px] flex items-center gap-1"
+          className="px-2 py-1 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded text-[11px] font-mono flex items-center gap-1 border border-purple-200"
+          title="插入 Hexo 原生代码块标签"
         >
-          <Sparkles className="w-3 h-3 text-blue-600" />
-          插入 Hexo Tag
+          <Sparkles className="w-3 h-3 text-purple-500" />
+          Hexo Codeblock
         </button>
-
-        <div className="ml-auto text-xs text-gray-400 flex items-center gap-3 font-mono">
-          <span>拖拽 .md 文件至此导入</span>
-          <span>{content.length} 字符</span>
-          <Lock className="w-3 h-3 text-emerald-500" />
-        </div>
+        <button
+          onClick={() => insertTextAtCursor('{% quote %}\n', '\n{% endquote %}')}
+          className="px-2 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded text-[11px] font-mono flex items-center gap-1 border border-blue-200"
+          title="插入 Hexo 引用块标签"
+        >
+          <Sparkles className="w-3 h-3 text-blue-500" />
+          Hexo Quote
+        </button>
       </div>
 
-      {/* Editor Split Main Layout */}
-      <div className="flex-1 flex overflow-hidden relative bg-white">
-        {/* Left: Source Markdown Editor */}
+      {/* Main Workspace split */}
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Left Side: Markdown Source Editor */}
         {(viewMode === 'split' || viewMode === 'source') && (
-          <div className={`h-full flex flex-col ${viewMode === 'split' ? 'w-1/2 border-r border-vercel-border' : 'w-full'}`}>
+          <div className="flex-1 flex flex-col border-r border-vercel-border bg-white overflow-hidden">
             <textarea
               id="md-textarea"
               value={content}
               onChange={(e) => handleContentChange(e.target.value)}
-              placeholder="在此输入完整的 Markdown 源码 (支持 Ctrl+Z 撤销 / Ctrl+Y 重做，支持拖拽文件导入...)"
-              spellCheck={false}
-              className="w-full h-full p-6 bg-white text-zinc-900 font-mono text-sm leading-relaxed outline-none resize-none"
+              placeholder="在此输入 Markdown 正文内容..."
+              className="w-full h-full p-6 bg-transparent outline-none resize-none font-mono text-xs leading-relaxed text-vercel-black"
             />
           </div>
         )}
 
-        {/* Right: Real-time Markdown & Mermaid Preview Panel */}
+        {/* Right Side: Live HTML Rendered View */}
         {(viewMode === 'split' || viewMode === 'preview') && (
-          <div
-            ref={previewRef}
-            className={`h-full overflow-y-auto p-8 markdown-body bg-white ${
-              viewMode === 'split' ? 'w-1/2' : 'w-full max-w-4xl mx-auto'
-            }`}
-            dangerouslySetInnerHTML={{ __html: renderedHtml }}
-          />
+          <div className="flex-1 p-6 bg-white overflow-y-auto font-sans leading-relaxed text-vercel-black">
+            <div
+              ref={previewRef}
+              dangerouslySetInnerHTML={{ __html: renderedHtml }}
+              className="prose prose-sm max-w-none prose-headings:font-semibold prose-a:text-vercel-blue prose-pre:bg-zinc-950 prose-pre:text-zinc-100"
+            />
+          </div>
         )}
 
-        {/* Front-Matter Drawer Side Overlay */}
+        {/* Drawer: Front-matter Editor Modal */}
         {showDrawer && (
-          <div className="w-80 border-l border-vercel-border bg-vercel-neutral p-5 flex flex-col gap-4 text-xs font-mono absolute right-0 top-0 bottom-0 z-20 shadow-xl">
-            <h3 className="label-caps text-gray-500">Front-matter 元数据配置</h3>
-
-            <div>
-              <label className="block text-gray-500 mb-1">标题 (Title)</label>
-              <input
-                type="text"
-                value={meta.title || ''}
-                onChange={(e) => setMeta({ ...meta, title: e.target.value })}
-                className="w-full bg-white border border-vercel-border rounded-md px-2.5 py-1.5 text-xs outline-none focus:border-vercel-blue"
-              />
+          <div className="absolute right-0 top-0 bottom-0 w-80 bg-white border-l border-vercel-border shadow-xl p-6 z-30 space-y-4 font-sans text-xs overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-vercel-border pb-3">
+              <h3 className="font-semibold text-sm text-vercel-black">Front-matter 元数据</h3>
+              <button
+                onClick={() => setShowDrawer(false)}
+                className="text-gray-400 hover:text-black font-semibold text-sm"
+              >
+                ✕
+              </button>
             </div>
 
-            <div>
-              <label className="block text-gray-500 mb-1">标签 (Tags, 逗号分隔，默认无)</label>
-              <input
-                type="text"
-                value={Array.isArray(meta.tags) ? meta.tags.join(', ') : meta.tags || ''}
-                onChange={(e) =>
-                  setMeta({
-                    ...meta,
-                    tags: e.target.value ? e.target.value.split(',').map((s) => s.trim()) : [],
-                  })
-                }
-                placeholder="例如: Hexo, 随笔"
-                className="w-full bg-white border border-vercel-border rounded-md px-2.5 py-1.5 text-xs outline-none focus:border-vercel-blue"
-              />
-            </div>
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <label className="font-medium text-gray-700">文章标题 (title)</label>
+                <input
+                  type="text"
+                  value={meta.title || ''}
+                  onChange={(e) => setMeta({ ...meta, title: e.target.value })}
+                  className="w-full bg-white border border-vercel-border rounded px-2.5 py-1.5 outline-none focus:border-vercel-blue"
+                />
+              </div>
 
-            <div>
-              <label className="block text-gray-500 mb-1">分类 (Categories，默认无)</label>
-              <input
-                type="text"
-                value={Array.isArray(meta.categories) ? meta.categories.join(', ') : meta.categories || ''}
-                onChange={(e) =>
-                  setMeta({
-                    ...meta,
-                    categories: e.target.value ? e.target.value.split(',').map((s) => s.trim()) : [],
-                  })
-                }
-                placeholder="例如: 技术架构"
-                className="w-full bg-white border border-vercel-border rounded-md px-2.5 py-1.5 text-xs outline-none focus:border-vercel-blue"
-              />
-            </div>
+              <div className="space-y-1">
+                <label className="font-medium text-gray-700">发布日期 (date)</label>
+                <input
+                  type="text"
+                  value={meta.date || ''}
+                  onChange={(e) => setMeta({ ...meta, date: e.target.value })}
+                  className="w-full bg-white border border-vercel-border rounded px-2.5 py-1.5 outline-none focus:border-vercel-blue font-mono"
+                />
+              </div>
 
-            <div>
-              <label className="block text-gray-500 mb-1">发布日期 (Date)</label>
-              <input
-                type="text"
-                value={meta.date || new Date().toISOString()}
-                onChange={(e) => setMeta({ ...meta, date: e.target.value })}
-                className="w-full bg-white border border-vercel-border rounded-md px-2.5 py-1.5 text-xs outline-none focus:border-vercel-blue"
-              />
+              <div className="space-y-1">
+                <label className="font-medium text-gray-700">标签 (tags, 逗号分隔)</label>
+                <input
+                  type="text"
+                  value={Array.isArray(meta.tags) ? meta.tags.join(', ') : meta.tags || ''}
+                  onChange={(e) =>
+                    setMeta({
+                      ...meta,
+                      tags: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
+                    })
+                  }
+                  placeholder="前端, React, Vite"
+                  className="w-full bg-white border border-vercel-border rounded px-2.5 py-1.5 outline-none focus:border-vercel-blue"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-medium text-gray-700">分类 (categories, 逗号分隔)</label>
+                <input
+                  type="text"
+                  value={
+                    Array.isArray(meta.categories)
+                      ? meta.categories.join(', ')
+                      : meta.categories || ''
+                  }
+                  onChange={(e) =>
+                    setMeta({
+                      ...meta,
+                      categories: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
+                    })
+                  }
+                  placeholder="技术干货"
+                  className="w-full bg-white border border-vercel-border rounded px-2.5 py-1.5 outline-none focus:border-vercel-blue"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-medium text-gray-700">自定义路径 (permalink)</label>
+                <input
+                  type="text"
+                  value={meta.permalink || ''}
+                  onChange={(e) => setMeta({ ...meta, permalink: e.target.value })}
+                  placeholder="my-custom-post-url"
+                  className="w-full bg-white border border-vercel-border rounded px-2.5 py-1.5 outline-none focus:border-vercel-blue font-mono"
+                />
+              </div>
             </div>
           </div>
         )}

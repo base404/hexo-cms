@@ -512,6 +512,7 @@ apiRouter.post('/posts/save', (req, res) => {
     isDraft,
     readMtime,
     originalFilename,
+    originalFilePath,
   } = req.body;
 
   const targetBlogDir = getActiveBlogDir();
@@ -527,13 +528,25 @@ apiRouter.post('/posts/save', (req, res) => {
   const newFilename = safeBase + '.md';
   const newFilePath = path.join(folderPath, newFilename);
 
-  if (originalFilename && originalFilename !== newFilename) {
-    const oldFilePath = path.join(folderPath, originalFilename);
-    if (fs.existsSync(oldFilePath)) {
-      try {
-        fs.unlinkSync(oldFilePath);
-      } catch {}
+  // Clean up old file if moving between _posts <-> _drafts or renaming
+  if (originalFilename) {
+    const postsFilePath = path.join(targetBlogDir, 'source/_posts', originalFilename);
+    const draftsFilePath = path.join(targetBlogDir, 'source/_drafts', originalFilename);
+    if (isDraft && fs.existsSync(postsFilePath)) {
+      try { fs.unlinkSync(postsFilePath); } catch {}
+    } else if (!isDraft && fs.existsSync(draftsFilePath)) {
+      try { fs.unlinkSync(draftsFilePath); } catch {}
     }
+    if (originalFilename !== newFilename) {
+      const oldSameFolder = path.join(folderPath, originalFilename);
+      if (fs.existsSync(oldSameFolder)) {
+        try { fs.unlinkSync(oldSameFolder); } catch {}
+      }
+    }
+  }
+
+  if (originalFilePath && fs.existsSync(originalFilePath) && originalFilePath.replace(/\\/g, '/') !== newFilePath.replace(/\\/g, '/')) {
+    try { fs.unlinkSync(originalFilePath); } catch {}
   }
 
   if (readMtime && lockManager.checkConflict(newFilePath, readMtime)) {
