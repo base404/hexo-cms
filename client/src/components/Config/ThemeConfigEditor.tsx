@@ -289,9 +289,9 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
           : typeof val === 'string'
           ? val.split(',').map((s) => s.trim()).filter(Boolean)
           : [];
-        const isTagField = field.type === 'tags' || (arr.length > 0 && typeof arr[0] === 'string');
+        const isTagsField = field.type === 'tags' || (field.type === 'array' && arr.length > 0 && typeof arr[0] === 'string');
 
-        if (isTagField) {
+        if (isTagsField || (field.type === 'tags' && arr.length === 0)) {
           const tagsList: string[] = arr.map(String);
           return (
             <div className="space-y-2 bg-zinc-50/80 p-3 border border-zinc-200 rounded-lg">
@@ -361,6 +361,11 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
 
         return (
           <div className="space-y-3 bg-zinc-50/80 p-3 border border-zinc-200 rounded-lg">
+            {arr.length === 0 && (
+              <div className="text-xs font-mono text-zinc-400 text-center py-4 border border-dashed border-zinc-200 rounded-lg bg-white">
+                暂无配置项目 (点击下方按钮添加)
+              </div>
+            )}
             {arr.map((item: any, idx: number) => (
               <div key={idx} className="p-3 bg-white border border-zinc-200 rounded-lg space-y-2 relative shadow-2xs">
                 <div className="flex items-center justify-between border-b border-zinc-100 pb-1.5 mb-1.5">
