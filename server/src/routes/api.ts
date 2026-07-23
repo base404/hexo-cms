@@ -461,7 +461,10 @@ apiRouter.post('/themes/:name/config', (req, res) => {
   } else {
     return res.status(500).json({ error: 'Failed to save theme config' });
   }
+});
+
 apiRouter.post('/themes/:name/upload-asset', (req, res) => {
+
   const { name } = req.params;
   const { filename, base64Data } = req.body;
   if (!filename || !base64Data) {
