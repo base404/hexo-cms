@@ -249,41 +249,7 @@ export class ExtensionService {
     return { ...baseData, ...overrideData };
   }
 
-  uploadThemeAsset(
-    blogDir: string,
-    themeName: string,
-    filename: string,
-    base64Data: string
-  ): { url: string; absolutePath: string } {
-    const targetDir = path.join(blogDir, 'themes', themeName, 'source', 'images');
-    if (!fs.existsSync(targetDir)) {
-      fs.mkdirSync(targetDir, { recursive: true });
-    }
-
-    const blogImagesDir = path.join(blogDir, 'source', 'images');
-    if (!fs.existsSync(blogImagesDir)) {
-      fs.mkdirSync(blogImagesDir, { recursive: true });
-    }
-
-    const safeFilename = path.basename(filename).replace(/[^a-zA-Z0-9_.-]/g, '_');
-    const themeFilePath = path.join(targetDir, safeFilename);
-    const blogFilePath = path.join(blogImagesDir, safeFilename);
-
-    const buffer = Buffer.from(base64Data.replace(/^data:image\/\w+;base64,/, ''), 'base64');
-
-    fs.writeFileSync(themeFilePath, buffer);
-    fs.writeFileSync(blogFilePath, buffer);
-
-    this.clearHexoCache(blogDir);
-
-    return {
-      url: `/images/${safeFilename}`,
-      absolutePath: themeFilePath,
-    };
-  }
-
   private clearHexoCache(blogDir: string): void {
-
     try {
       const dbPath = path.join(blogDir, 'db.json');
       if (fs.existsSync(dbPath)) {

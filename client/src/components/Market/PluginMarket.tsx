@@ -254,41 +254,41 @@ export const PluginMarket: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header Bar: Removed (CRUD) */}
+      {/* Header Bar */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-medium tracking-tight text-vercel-black">插件市场 & 依赖管理</h2>
           <p className="text-xs text-gray-500 font-mono mt-1">
-            包含 {CORE_BUILTIN_PLUGINS.size} 项官方核心初始化自带依赖 (紫标前置置顶)
+            包含 {CORE_BUILTIN_PLUGINS.size} 项官方核心初始化自带依赖 (置顶标注)
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center bg-zinc-100 p-0.5 rounded-md border border-zinc-200 text-xs">
+          <div className="flex items-center bg-zinc-100 p-0.5 rounded-[6px] border border-zinc-200 text-xs">
             <button
               onClick={() => setFilterMode('all')}
-              className={`px-3 py-1 rounded-sm transition-all ${
-                filterMode === 'all' ? 'bg-white shadow-sm font-semibold text-black' : 'text-gray-500'
+              className={`px-3 py-1 rounded-[4px] transition-all font-medium ${
+                filterMode === 'all' ? 'bg-white shadow-2xs font-semibold text-[#171717]' : 'text-gray-500 hover:text-gray-900'
               }`}
             >
               全部插件 ({allPluginList.length})
             </button>
             <button
               onClick={() => setFilterMode('core')}
-              className={`flex items-center gap-1 px-3 py-1 rounded-sm transition-all ${
-                filterMode === 'core' ? 'bg-white shadow-sm font-semibold text-black' : 'text-gray-500'
+              className={`flex items-center gap-1 px-3 py-1 rounded-[4px] transition-all font-medium ${
+                filterMode === 'core' ? 'bg-white shadow-2xs font-semibold text-[#171717]' : 'text-gray-500 hover:text-gray-900'
               }`}
             >
-              <ShieldCheck className="w-3.5 h-3.5 text-zinc-900" />
+              <ShieldCheck className="w-3.5 h-3.5 text-zinc-700" />
               核心自带 ({CORE_BUILTIN_PLUGINS.size})
             </button>
             <button
               onClick={() => setFilterMode('installed')}
-              className={`flex items-center gap-1 px-3 py-1 rounded-sm transition-all ${
-                filterMode === 'installed' ? 'bg-white shadow-sm font-semibold text-black' : 'text-gray-500'
+              className={`flex items-center gap-1 px-3 py-1 rounded-[4px] transition-all font-medium ${
+                filterMode === 'installed' ? 'bg-white shadow-2xs font-semibold text-[#171717]' : 'text-gray-500 hover:text-gray-900'
               }`}
             >
-              <PackageCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <PackageCheck className="w-3.5 h-3.5 text-[#00C853]" />
               已安装 ({installedPlugins.length})
             </button>
           </div>
@@ -302,7 +302,7 @@ export const PluginMarket: React.FC = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="搜索插件..."
-              className="w-full pl-9 pr-3 py-1.5 bg-white geist-card text-xs text-vercel-black placeholder-gray-400 outline-none focus:box-shadow-geist-focus"
+              className="w-full pl-9 pr-3 py-1.5 bg-white geist-card text-xs text-vercel-black placeholder-gray-400 outline-none focus:box-shadow-geist-focus rounded-[6px]"
             />
           </div>
 
@@ -311,7 +311,7 @@ export const PluginMarket: React.FC = () => {
               fetchMarketPlugins();
               fetchInstalledPlugins();
             }}
-            className="btn-secondary flex items-center gap-1.5 text-xs py-1.5"
+            className="bg-white border border-zinc-200 hover:bg-zinc-50 text-[#171717] rounded-[6px] flex items-center gap-1.5 text-xs py-1.5 px-3 font-medium shadow-2xs transition-colors"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             刷新
@@ -319,7 +319,7 @@ export const PluginMarket: React.FC = () => {
 
           <button
             onClick={handleClearCache}
-            className="bg-rose-600 hover:bg-rose-700 text-white rounded-md px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-colors shadow-sm"
+            className="bg-[#EE0000] hover:bg-red-700 text-white rounded-[6px] px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-colors shadow-2xs"
           >
             <Trash2 className="w-3.5 h-3.5" />
             清理市场缓存
@@ -336,8 +336,8 @@ export const PluginMarket: React.FC = () => {
           return (
             <div
               key={plugin.name}
-              className={`geist-card p-5 flex flex-col justify-between space-y-4 border ${
-                isCore ? 'border-zinc-300 bg-zinc-50/40' : 'border-vercel-border'
+              className={`geist-card p-5 flex flex-col justify-between space-y-4 border rounded-[6px] bg-white ${
+                isCore ? 'border-zinc-300 bg-zinc-50/50' : 'border-zinc-200'
               }`}
             >
               <div className="space-y-2">
@@ -354,35 +354,34 @@ export const PluginMarket: React.FC = () => {
 
                   <div className="flex items-center gap-2">
                     {isCore && (
-                      <span className="label-caps text-[10px] bg-zinc-100 text-zinc-800 border border-zinc-200 px-2 py-0.5 rounded-[4px] font-medium flex items-center gap-1">
+                      <span className="label-caps text-[10px] bg-zinc-100 text-[#171717] border border-zinc-300 px-2 py-0.5 rounded-[4px] font-semibold flex items-center gap-1 shadow-2xs">
                         ⚡ 核心组件
                       </span>
                     )}
 
-
                     {installed ? (
-                      <span className="label-caps text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-sm font-semibold flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600" /> 已安装
+                      <span className="label-caps text-[10px] bg-emerald-50 text-[#00C853] border border-emerald-200 px-2 py-0.5 rounded-[4px] font-semibold flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3 text-[#00C853]" /> 已安装
                       </span>
                     ) : (
-                      <span className="label-caps text-xs text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded-sm">
+                      <span className="label-caps text-xs text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded-[4px]">
                         HEXO
                       </span>
                     )}
                   </div>
                 </div>
 
-                <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">
+                <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed font-sans">
                   {plugin.description || '暂无描述'}
                 </p>
               </div>
 
-              <div className="flex items-center justify-between pt-2 border-t border-vercel-border">
+              <div className="flex items-center justify-between pt-2 border-t border-zinc-100">
                 <div className="flex flex-wrap gap-1">
                   {plugin.tags.slice(0, 3).map((tag) => (
                     <span
                       key={tag}
-                      className="label-caps text-[10px] text-zinc-500 bg-zinc-50 border border-zinc-200 px-1.5 py-0.2 rounded-sm"
+                      className="label-caps text-[10px] text-zinc-600 bg-zinc-100 border border-zinc-200 px-1.5 py-0.5 rounded-[4px] font-mono"
                     >
                       #{tag}
                     </span>
@@ -392,10 +391,10 @@ export const PluginMarket: React.FC = () => {
                 {installed ? (
                   <button
                     onClick={() => handleUninstallPlugin(plugin.name)}
-                    className={`btn-secondary text-xs px-3 py-1 flex items-center gap-1 ${
+                    className={`text-xs px-3 py-1 rounded-[6px] font-medium transition-colors flex items-center gap-1 border ${
                       isCore
-                        ? 'text-amber-700 bg-amber-50 hover:bg-amber-100 border-amber-300 font-medium'
-                        : 'text-rose-600 hover:bg-rose-50 border-rose-200'
+                        ? 'text-amber-800 bg-amber-50 hover:bg-amber-100 border-amber-300'
+                        : 'text-[#EE0000] bg-white hover:bg-rose-50 border-rose-200'
                     }`}
                   >
                     {isCore ? <AlertTriangle className="w-3.5 h-3.5 text-amber-600" /> : <Trash2 className="w-3.5 h-3.5" />}
@@ -404,7 +403,7 @@ export const PluginMarket: React.FC = () => {
                 ) : (
                   <button
                     onClick={() => handleInstallPlugin(plugin.name)}
-                    className="btn-primary-pill text-xs px-4 py-1 flex items-center gap-1.5"
+                    className="bg-[#171717] hover:bg-black text-white text-xs px-4 py-1.5 rounded-[6px] font-medium flex items-center gap-1.5 shadow-2xs transition-colors"
                   >
                     <Download className="w-3 h-3" />
                     一键安装

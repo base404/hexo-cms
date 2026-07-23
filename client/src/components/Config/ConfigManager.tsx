@@ -309,7 +309,7 @@ export const ConfigManager: React.FC<ConfigManagerProps> = ({
         {/* Category 3: Theme & Pagination */}
         <div className="geist-card p-6 space-y-4">
           <div className="flex items-center gap-2 border-b border-vercel-border pb-3">
-            <Palette className="w-4 h-4 text-zinc-900" />
+            <Palette className="w-4 h-4 text-purple-600" />
             <h3 className="font-semibold text-sm text-vercel-black tracking-tight">外观主题与分页 (Theme & Pagination)</h3>
           </div>
 
@@ -318,7 +318,7 @@ export const ConfigManager: React.FC<ConfigManagerProps> = ({
             <div className="space-y-1.5">
               <label className="font-medium text-gray-700 flex items-center justify-between">
                 <span>当前皮肤主题 (theme)</span>
-                <span className="text-[10px] text-zinc-500 font-mono">已安装 {installedThemes.length} 个</span>
+                <span className="text-[10px] text-purple-600 font-mono">已安装 {installedThemes.length} 个</span>
               </label>
               <div className="flex items-center gap-2">
                 <select
@@ -326,7 +326,7 @@ export const ConfigManager: React.FC<ConfigManagerProps> = ({
                   onChange={(e) => setTheme(e.target.value)}
                   onFocus={fetchInstalledThemes}
                   onClick={fetchInstalledThemes}
-                  className="w-full bg-white border border-vercel-border rounded-md px-3 py-1.5 outline-none focus:border-[#0070F3] focus:ring-1 focus:ring-[#0070F3] font-mono text-xs cursor-pointer font-semibold text-zinc-900 shadow-2xs"
+                  className="w-full bg-white border border-vercel-border rounded-md px-3 py-1.5 outline-none focus:border-purple-600 font-mono text-xs cursor-pointer font-semibold text-zinc-900 shadow-2xs"
                 >
                   {themeOptions.map((tName) => {
                     const isBuiltin = tName === 'landscape';
@@ -341,14 +341,13 @@ export const ConfigManager: React.FC<ConfigManagerProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsThemeConfigEditorOpen(true)}
-                  className="bg-white border border-zinc-200 hover:bg-zinc-50 text-[#171717] text-xs py-1.5 px-3 flex items-center gap-1 rounded-md font-medium shrink-0 focus:border-[#0070F3] focus:ring-1 focus:ring-[#0070F3]"
+                  className="btn-secondary text-xs py-1.5 px-2.5 flex items-center gap-1 text-purple-700 bg-purple-50 border-purple-200 hover:bg-purple-100 shrink-0"
                   title="可视化配置当前主题"
                 >
-                  <Sliders className="w-3.5 h-3.5 text-zinc-700" />
+                  <Sliders className="w-3.5 h-3.5 text-purple-600" />
                   配置 Schema
                 </button>
               </div>
-
             </div>
 
             <div className="space-y-1.5">
