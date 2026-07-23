@@ -22,14 +22,13 @@ import {
 export interface ThemeSchemaField {
   name: string;
   label: string;
-  type: 'text' | 'textarea' | 'number' | 'switch' | 'select' | 'color' | 'code' | 'array';
+  type: 'text' | 'textarea' | 'number' | 'switch' | 'select' | 'color' | 'code' | 'json' | 'array';
   description?: string;
   default?: any;
   options?: { value: any; label: string }[];
   min?: number;
   max?: number;
   language?: string;
-  itemFields?: { key: string; label: string; placeholder?: string }[];
 }
 
 export interface ThemeSchemaGroup {
@@ -282,75 +281,97 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
           />
         );
 
+      case 'json':
       case 'array': {
-        const items: Record<string, string>[] = Array.isArray(val) ? val : [];
-        const itemFields = field.itemFields || [
-          { key: 'name', label: '名称', placeholder: '站点名称' },
-          { key: 'url', label: '链接', placeholder: 'https://example.com' },
-          { key: 'avatar', label: '头像 URL', placeholder: 'https://example.com/avatar.png' },
-          { key: 'desc', label: '描述', placeholder: '一句话简介' },
-        ];
-
-        const updateItem = (idx: number, key: string, value: string) => {
-          const next = items.map((item, i) =>
-            i === idx ? { ...item, [key]: value } : item
-          );
-          handleFieldChange(field.name, next);
-        };
-
-        const removeItem = (idx: number) => {
-          handleFieldChange(field.name, items.filter((_, i) => i !== idx));
-        };
-
-        const addItem = () => {
-          const blank: Record<string, string> = {};
-          itemFields.forEach((f) => { blank[f.key] = ''; });
-          handleFieldChange(field.name, [...items, blank]);
-        };
-
+        const arr = Array.isArray(val) ? val : [];
         return (
-          <div className="space-y-3">
-            {items.map((item, idx) => (
-              <div
-                key={idx}
-                className="border border-zinc-200 rounded-lg p-3 bg-zinc-50 space-y-2 relative group"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-mono text-zinc-400 font-semibold uppercase tracking-wider">
-                    #{idx + 1} {item.name || '(未命名)'}
-                  </span>
+          <div className="space-y-3 bg-zinc-50/80 p-3 border border-zinc-200 rounded-lg">
+            {arr.map((item: any, idx: number) => (
+              <div key={idx} className="p-3 bg-white border border-zinc-200 rounded-lg space-y-2 relative shadow-2xs">
+                <div className="flex items-center justify-between border-b border-zinc-100 pb-1.5 mb-1.5">
+                  <span className="text-[11px] font-mono font-bold text-zinc-600">友链 #{idx + 1}</span>
                   <button
                     type="button"
-                    onClick={() => removeItem(idx)}
-                    className="p-1 rounded hover:bg-red-50 hover:text-red-500 text-zinc-400 transition-colors"
-                    title="删除此项"
+                    onClick={() => {
+                      const next = arr.filter((_: any, i: number) => i !== idx);
+                      handleFieldChange(field.name, next);
+                    }}
+                    className="text-zinc-400 hover:text-red-600 text-xs flex items-center gap-1 font-mono transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
+                    删除
                   </button>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  {itemFields.map((f) => (
-                    <div key={f.key}>
-                      <label className="text-[10px] font-semibold text-zinc-500 block mb-0.5">{f.label}</label>
-                      <input
-                        type="text"
-                        value={item[f.key] || ''}
-                        onChange={(e) => updateItem(idx, f.key, e.target.value)}
-                        placeholder={f.placeholder || f.label}
-                        className="w-full bg-white border border-zinc-200 rounded-[5px] px-2 py-1 text-xs outline-none focus:border-[#0070F3] font-mono shadow-2xs transition-colors"
-                      />
-                    </div>
-                  ))}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[10px] font-mono text-zinc-500 font-semibold">名称 (name)</label>
+                    <input
+                      type="text"
+                      value={item.name || ''}
+                      onChange={(e) => {
+                        const next = [...arr];
+                        next[idx] = { ...next[idx], name: e.target.value };
+                        handleFieldChange(field.name, next);
+                      }}
+                      placeholder="例如: Hexo 官方文档"
+                      className="w-full bg-white border border-zinc-200 rounded px-2.5 py-1 text-xs outline-none focus:border-[#0070F3] font-mono shadow-2xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-mono text-zinc-500 font-semibold text-[#0070F3]">链接 (url)</label>
+                    <input
+                      type="text"
+                      value={item.url || ''}
+                      onChange={(e) => {
+                        const next = [...arr];
+                        next[idx] = { ...next[idx], url: e.target.value };
+                        handleFieldChange(field.name, next);
+                      }}
+                      placeholder="https://..."
+                      className="w-full bg-white border border-zinc-200 rounded px-2.5 py-1 text-xs outline-none focus:border-[#0070F3] font-mono shadow-2xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-mono text-zinc-500">头像 (avatar)</label>
+                    <input
+                      type="text"
+                      value={item.avatar || ''}
+                      onChange={(e) => {
+                        const next = [...arr];
+                        next[idx] = { ...next[idx], avatar: e.target.value };
+                        handleFieldChange(field.name, next);
+                      }}
+                      placeholder="https://..."
+                      className="w-full bg-white border border-zinc-200 rounded px-2.5 py-1 text-xs outline-none focus:border-[#0070F3] font-mono shadow-2xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-mono text-zinc-500">描述 (desc)</label>
+                    <input
+                      type="text"
+                      value={item.desc || ''}
+                      onChange={(e) => {
+                        const next = [...arr];
+                        next[idx] = { ...next[idx], desc: e.target.value };
+                        handleFieldChange(field.name, next);
+                      }}
+                      placeholder="简短介绍..."
+                      className="w-full bg-white border border-zinc-200 rounded px-2.5 py-1 text-xs outline-none focus:border-[#0070F3] font-mono shadow-2xs"
+                    />
+                  </div>
                 </div>
               </div>
             ))}
             <button
               type="button"
-              onClick={addItem}
-              className="w-full flex items-center justify-center gap-1.5 py-2 text-xs text-zinc-500 hover:text-zinc-900 border border-dashed border-zinc-300 hover:border-zinc-500 rounded-lg transition-colors"
+              onClick={() => {
+                const next = [...arr, { name: '', url: 'https://', avatar: '', desc: '' }];
+                handleFieldChange(field.name, next);
+              }}
+              className="w-full py-2 border border-dashed border-zinc-300 hover:border-zinc-500 text-zinc-700 hover:text-zinc-900 rounded-lg text-xs font-mono flex items-center justify-center gap-1.5 transition-colors bg-white shadow-2xs font-medium"
             >
-              <Plus className="w-3.5 h-3.5" />
-              添加一条
+              <Plus className="w-3.5 h-3.5 text-zinc-600" />
+              添加新友链项目
             </button>
           </div>
         );
@@ -473,7 +494,7 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
                         <div
                           key={field.name}
                           className={`space-y-1.5 ${
-                            field.type === 'textarea' || field.type === 'code' || field.type === 'array' ? 'md:col-span-2' : ''
+                            field.type === 'textarea' || field.type === 'code' ? 'md:col-span-2' : ''
                           }`}
                         >
                           <div className="flex items-center justify-between">
