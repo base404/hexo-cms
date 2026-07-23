@@ -230,26 +230,26 @@ const MainApp: React.FC = () => {
     <div className="min-h-screen flex flex-col bg-vercel-neutral text-vercel-black">
       {/* Navigation Header */}
       <header className="bg-white border-b border-vercel-border sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-6">
+        <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between overflow-x-auto gap-4 scrollbar-none">
+          <div className="flex items-center gap-4 shrink-0">
             {/* Logo Brand Icon */}
             <div
               onClick={() => workspace.isHexoBlog && changeActiveTab('posts')}
-              className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+              className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity shrink-0"
               title="回到首页 (文章管理)"
             >
               <div className="w-5 h-5 bg-vercel-black rounded-sm flex items-center justify-center text-white font-bold text-xs shadow-xs">
                 ▲
               </div>
-              <span className="font-semibold text-sm tracking-tight text-vercel-black">Hexo CMS</span>
+              <span className="font-semibold text-sm tracking-tight text-vercel-black whitespace-nowrap">Hexo CMS</span>
             </div>
 
             {/* Nav Tabs */}
-            <nav className="flex items-center gap-1 text-xs font-medium text-gray-600">
+            <nav className="flex items-center gap-1 text-xs font-medium text-gray-600 shrink-0">
               <button
                 onClick={() => workspace.isHexoBlog && changeActiveTab('posts')}
                 disabled={!workspace.isHexoBlog}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors whitespace-nowrap shrink-0 ${
                   activeTab === 'posts' || activeTab === 'editor' ? 'bg-zinc-100 text-black font-semibold' : 'hover:bg-zinc-50'
                 } ${!workspace.isHexoBlog ? 'opacity-40 cursor-not-allowed' : ''}`}
               >
@@ -259,7 +259,7 @@ const MainApp: React.FC = () => {
               <button
                 onClick={() => workspace.isHexoBlog && changeActiveTab('taxonomy')}
                 disabled={!workspace.isHexoBlog}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors whitespace-nowrap shrink-0 ${
                   activeTab === 'taxonomy' ? 'bg-zinc-100 text-black font-semibold' : 'hover:bg-zinc-50'
                 } ${!workspace.isHexoBlog ? 'opacity-40 cursor-not-allowed' : ''}`}
               >
@@ -270,7 +270,7 @@ const MainApp: React.FC = () => {
               <button
                 onClick={() => workspace.isHexoBlog && changeActiveTab('plugins')}
                 disabled={!workspace.isHexoBlog}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors whitespace-nowrap shrink-0 ${
                   activeTab === 'plugins' ? 'bg-zinc-100 text-black font-semibold' : 'hover:bg-zinc-50'
                 } ${!workspace.isHexoBlog ? 'opacity-40 cursor-not-allowed' : ''}`}
               >
@@ -281,7 +281,7 @@ const MainApp: React.FC = () => {
               <button
                 onClick={() => workspace.isHexoBlog && changeActiveTab('themes')}
                 disabled={!workspace.isHexoBlog}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors whitespace-nowrap shrink-0 ${
                   activeTab === 'themes' ? 'bg-zinc-100 text-black font-semibold' : 'hover:bg-zinc-50'
                 } ${!workspace.isHexoBlog ? 'opacity-40 cursor-not-allowed' : ''}`}
               >
@@ -292,7 +292,7 @@ const MainApp: React.FC = () => {
               <button
                 onClick={() => workspace.isHexoBlog && changeActiveTab('config')}
                 disabled={!workspace.isHexoBlog}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors whitespace-nowrap shrink-0 ${
                   activeTab === 'config' ? 'bg-zinc-100 text-black font-semibold' : 'hover:bg-zinc-50'
                 } ${!workspace.isHexoBlog ? 'opacity-40 cursor-not-allowed' : ''}`}
               >
@@ -303,7 +303,7 @@ const MainApp: React.FC = () => {
               <button
                 onClick={() => workspace.isHexoBlog && changeActiveTab('build')}
                 disabled={!workspace.isHexoBlog}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors whitespace-nowrap shrink-0 ${
                   activeTab === 'build' ? 'bg-zinc-100 text-black font-semibold' : 'hover:bg-zinc-50'
                 } ${!workspace.isHexoBlog ? 'opacity-40 cursor-not-allowed' : ''}`}
               >
@@ -314,16 +314,16 @@ const MainApp: React.FC = () => {
             </nav>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 shrink-0">
             {/* Hexo Server Preview Quick Control Pill */}
             {workspace.isHexoBlog && <HexoServerControl />}
 
             <button
               onClick={() => setShowDirModal(true)}
-              className="flex items-center gap-1.5 text-xs font-mono bg-zinc-100 hover:bg-zinc-200 text-zinc-800 px-3 py-1.5 rounded-md border border-zinc-200 transition-colors"
+              className="flex items-center gap-1.5 text-xs font-mono bg-zinc-100 hover:bg-zinc-200 text-zinc-800 px-3 py-1.5 rounded-md border border-zinc-200 transition-colors whitespace-nowrap shrink-0"
             >
               <Folder className="w-3.5 h-3.5 text-blue-600" />
-              <span className="max-w-[140px] truncate">{workspace.blogDir}</span>
+              <span className="max-w-[120px] truncate">{workspace.blogDir}</span>
             </button>
           </div>
         </div>

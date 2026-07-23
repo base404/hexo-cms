@@ -406,25 +406,25 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
       )}
 
       {/* Editor Top Bar Toolbar */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-vercel-neutral border-b border-vercel-border select-none">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-vercel-neutral border-b border-vercel-border select-none overflow-x-auto gap-3 scrollbar-none">
+        <div className="flex items-center gap-3 shrink-0">
           <input
             type="text"
             value={meta.title || ''}
             onChange={(e) => setMeta({ ...meta, title: e.target.value })}
             placeholder="输入文章标题..."
-            className="text-base font-semibold bg-transparent text-vercel-black placeholder-gray-400 outline-none w-72 focus:w-96 transition-all"
+            className="text-base font-semibold bg-transparent text-vercel-black placeholder-gray-400 outline-none w-48 sm:w-72 focus:w-80 transition-all truncate"
           />
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 shrink-0">
             {isDraft && (
-              <span className="label-caps text-[10px] bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded font-mono">
+              <span className="label-caps text-[10px] bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded font-mono whitespace-nowrap">
                 草稿 DRAFT
               </span>
             )}
             <button
               onClick={() => setShowDrawer(!showDrawer)}
-              className={`btn-secondary text-xs py-1 px-2.5 flex items-center gap-1 transition-colors ${
+              className={`btn-secondary text-xs py-1 px-2.5 flex items-center gap-1 transition-colors whitespace-nowrap shrink-0 ${
                 showDrawer ? 'bg-zinc-200 text-black font-semibold' : ''
               }`}
               title="设置文章属性与 Front-matter"
@@ -436,9 +436,9 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
         </div>
 
         {/* Action Controls & View Switcher */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           {/* Undo / Redo buttons */}
-          <div className="flex items-center bg-white border border-vercel-border rounded-md p-0.5">
+          <div className="flex items-center bg-white border border-vercel-border rounded-md p-0.5 shrink-0">
             <button
               onClick={handleUndo}
               disabled={historyIndexRef.current <= 0}
@@ -458,10 +458,10 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
           </div>
 
           {/* Mode Segment Switcher */}
-          <div className="flex items-center bg-zinc-100 p-0.5 rounded-md border border-vercel-border text-xs">
+          <div className="flex items-center bg-zinc-100 p-0.5 rounded-md border border-vercel-border text-xs shrink-0">
             <button
               onClick={() => setViewMode('split')}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-sm transition-all ${
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-sm transition-all whitespace-nowrap ${
                 viewMode === 'split' ? 'bg-white shadow-2xs font-medium text-black' : 'text-gray-500'
               }`}
             >
@@ -469,7 +469,7 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
             </button>
             <button
               onClick={() => setViewMode('source')}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-sm transition-all ${
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-sm transition-all whitespace-nowrap ${
                 viewMode === 'source' ? 'bg-white shadow-2xs font-medium text-black' : 'text-gray-500'
               }`}
             >
@@ -477,7 +477,7 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
             </button>
             <button
               onClick={() => setViewMode('preview')}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-sm transition-all ${
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-sm transition-all whitespace-nowrap ${
                 viewMode === 'preview' ? 'bg-white shadow-2xs font-medium text-black' : 'text-gray-500'
               }`}
             >
@@ -486,18 +486,18 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => onSave(content, meta, true)}
               disabled={isSaving}
-              className="bg-white border border-zinc-200 hover:bg-zinc-50 text-[#171717] text-xs px-3 py-1.5 rounded-[6px] font-medium transition-colors flex items-center gap-1.5"
+              className="bg-white border border-zinc-200 hover:bg-zinc-50 text-[#171717] text-xs px-3 py-1.5 rounded-[6px] font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0"
             >
               <FileCode className="w-3.5 h-3.5 text-amber-600" /> 存为草稿
             </button>
             <button
               onClick={() => onSave(content, meta, false)}
               disabled={isSaving}
-              className="bg-[#171717] hover:bg-black text-white text-xs px-4 py-1.5 rounded-[6px] font-medium shadow-2xs transition-colors flex items-center gap-1.5"
+              className="bg-[#171717] hover:bg-black text-white text-xs px-4 py-1.5 rounded-[6px] font-medium shadow-2xs transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0"
             >
               <Save className="w-3.5 h-3.5 text-emerald-400" />
               {isSaving ? '保存中...' : '发布文章'}
