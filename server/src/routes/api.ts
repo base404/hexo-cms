@@ -461,10 +461,25 @@ apiRouter.post('/themes/:name/config', (req, res) => {
   } else {
     return res.status(500).json({ error: 'Failed to save theme config' });
   }
+apiRouter.post('/themes/:name/upload-asset', (req, res) => {
+  const { name } = req.params;
+  const { filename, base64Data } = req.body;
+  if (!filename || !base64Data) {
+    return res.status(400).json({ error: 'filename and base64Data required' });
+  }
+
+  const blogDir = getActiveBlogDir();
+  try {
+    const result = extensionService.uploadThemeAsset(blogDir, name, filename, base64Data);
+    return res.json({ success: true, ...result });
+  } catch (e: any) {
+    return res.status(500).json({ error: e.message });
+  }
 });
 
 
 // 8. 全局 _config.yml 接口
+
 apiRouter.get('/config', (req, res) => {
   const blogDir = (req.query.blogDir as string) || getActiveBlogDir();
   const configPath = path.join(blogDir, '_config.yml');

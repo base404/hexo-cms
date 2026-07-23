@@ -166,8 +166,41 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
     showToast('已重置表单至上次保存状态', 'info');
   };
 
+  const handleFileUpload = (fieldName: string, file: File) => {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64Data = reader.result as string;
+      try {
+        const res = await fetch(`/api/themes/${themeName}/upload-asset`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: file.name, base64Data }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          handleFieldChange(fieldName, data.url);
+          showToast(`文件 ${file.name} 已保存至 themes/${themeName}/source/images/`, 'success', '上传成功');
+        } else {
+          showToast('上传图片失败', 'error');
+        }
+      } catch (e: any) {
+        showToast(`上传出错: ${e.message}`, 'error');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const renderFieldInput = (field: ThemeSchemaField) => {
     const val = formData[field.name];
+    const isImageOrFile =
+      field.name.includes('avatar') ||
+      field.name.includes('logo') ||
+      field.name.includes('favicon') ||
+      field.name.includes('img') ||
+      field.name.includes('image') ||
+      field.name.includes('icon') ||
+      field.name.includes('file') ||
+      field.name.includes('banner');
 
     switch (field.type) {
       case 'switch':
@@ -256,16 +289,33 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
       case 'text':
       default:
         return (
-          <input
-            type="text"
-            value={val !== undefined ? val : ''}
-            onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            placeholder={field.default ? `默认: ${field.default}` : ''}
-            className="w-full bg-white border border-zinc-200 rounded-[6px] px-3 py-1.5 text-xs outline-none focus:border-[#0070F3] focus:ring-1 focus:ring-[#0070F3] font-sans shadow-2xs transition-colors"
-          />
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={val !== undefined ? val : ''}
+              onChange={(e) => handleFieldChange(field.name, e.target.value)}
+              placeholder={field.default ? `默认: ${field.default}` : ''}
+              className="flex-1 bg-white border border-zinc-200 rounded-[6px] px-3 py-1.5 text-xs outline-none focus:border-[#0070F3] focus:ring-1 focus:ring-[#0070F3] font-sans shadow-2xs transition-colors"
+            />
+            {isImageOrFile && (
+              <label className="bg-white border border-zinc-200 hover:bg-zinc-50 text-[#171717] text-xs px-2.5 py-1.5 rounded-[6px] font-medium cursor-pointer flex items-center gap-1 shrink-0 transition-colors shadow-2xs">
+                <span>上传</span>
+                <input
+                  type="file"
+                  accept="image/*,.ico,.png,.jpg,.jpeg,.svg,.gif,.webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleFileUpload(field.name, f);
+                  }}
+                />
+              </label>
+            )}
+          </div>
         );
     }
   };
+
 
   const displayName = schema?.meta?.display_name || themeName;
 

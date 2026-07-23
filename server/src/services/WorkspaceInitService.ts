@@ -172,6 +172,20 @@ theme: landscape
     const postsDir = path.join(normalizedDir, 'source/_posts');
     fs.mkdirSync(postsDir, { recursive: true });
 
+    const categoriesDir = path.join(normalizedDir, 'source/categories');
+    fs.mkdirSync(categoriesDir, { recursive: true });
+    const categoriesMd = path.join(categoriesDir, 'index.md');
+    if (!fs.existsSync(categoriesMd)) {
+      fs.writeFileSync(categoriesMd, `---\ntitle: 分类\ntype: categories\nlayout: categories\ncomments: false\n---\n`, 'utf8');
+    }
+
+    const tagsDir = path.join(normalizedDir, 'source/tags');
+    fs.mkdirSync(tagsDir, { recursive: true });
+    const tagsMd = path.join(tagsDir, 'index.md');
+    if (!fs.existsSync(tagsMd)) {
+      fs.writeFileSync(tagsMd, `---\ntitle: 标签\ntype: tags\nlayout: tags\ncomments: false\n---\n`, 'utf8');
+    }
+
     const helloPath = path.join(postsDir, 'hello-world.md');
     if (!fs.existsSync(helloPath)) {
       onLog(`  生成首篇示例博文 source/_posts/hello-world.md...\n`);
