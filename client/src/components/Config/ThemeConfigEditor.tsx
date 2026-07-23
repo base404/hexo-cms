@@ -117,9 +117,10 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
       setInitialData(merged);
     } catch (e: any) {
       showToast(`加载主题配置失败: ${e.message}`, 'error');
-    } fontally {
+    } finally {
       setLoading(false);
     }
+
   };
 
   const handleFieldChange = (fieldName: string, value: any) => {

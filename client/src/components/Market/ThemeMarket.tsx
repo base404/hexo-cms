@@ -327,22 +327,22 @@ export const ThemeMarket: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => setEditingThemeConfig(theme.name)}
-                        className="btn-secondary text-xs py-1.5 px-2.5 flex items-center gap-1 text-purple-700 bg-purple-50 border-purple-200 hover:bg-purple-100"
-                        title="可视化编辑主题配置"
+                        className="btn-secondary text-xs py-1.5 px-3 flex items-center justify-center gap-1 text-purple-700 bg-purple-50 border border-purple-300 hover:bg-purple-100 font-medium rounded-md shadow-2xs transition-colors shrink-0"
+                        title="可视化配置主题 Schema"
                       >
                         <Sliders className="w-3.5 h-3.5 text-purple-600" />
-                        配置
+                        配置 Schema
                       </button>
 
                       {!isActive ? (
                         <button
                           onClick={() => handleActivateTheme(theme.name)}
-                          className="btn-primary-pill text-xs flex-1 py-1.5 flex items-center justify-center gap-1 bg-emerald-600 hover:bg-emerald-700"
+                          className="btn-primary-pill text-xs flex-1 py-1.5 flex items-center justify-center gap-1 bg-emerald-600 hover:bg-emerald-700 font-medium"
                         >
                           <Play className="w-3.5 h-3.5" /> 启用该主题
                         </button>
                       ) : (
-                        <span className="text-xs text-emerald-600 font-mono flex-1 text-center py-1.5 bg-emerald-50 rounded border border-emerald-200">
+                        <span className="text-xs text-emerald-700 font-mono font-semibold flex-1 text-center py-1.5 bg-emerald-50 rounded-md border border-emerald-200">
                           运行中
                         </span>
                       )}
@@ -350,7 +350,7 @@ export const ThemeMarket: React.FC = () => {
                       {!isActive && (
                         <button
                           onClick={() => handleDeleteTheme(theme.name)}
-                          className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded"
+                          className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
                           title="删除主题目录"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -358,6 +358,7 @@ export const ThemeMarket: React.FC = () => {
                       )}
                     </div>
                   ) : (
+
                     <button
                       onClick={() => handleInstallTheme(theme.name, theme.link)}
                       className="btn-primary-pill text-xs w-full py-1.5 flex items-center justify-center gap-1.5"
