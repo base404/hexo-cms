@@ -276,10 +276,10 @@ export const PluginMarket: React.FC = () => {
             <button
               onClick={() => setFilterMode('core')}
               className={`flex items-center gap-1 px-3 py-1 rounded-sm transition-all ${
-                filterMode === 'core' ? 'bg-white shadow-sm font-semibold text-purple-700' : 'text-gray-500'
+                filterMode === 'core' ? 'bg-white shadow-sm font-semibold text-black' : 'text-gray-500'
               }`}
             >
-              <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
+              <ShieldCheck className="w-3.5 h-3.5 text-zinc-900" />
               核心自带 ({CORE_BUILTIN_PLUGINS.size})
             </button>
             <button
@@ -337,7 +337,7 @@ export const PluginMarket: React.FC = () => {
             <div
               key={plugin.name}
               className={`geist-card p-5 flex flex-col justify-between space-y-4 border ${
-                isCore ? 'border-purple-200 bg-purple-50/10' : 'border-vercel-border'
+                isCore ? 'border-zinc-300 bg-zinc-50/40' : 'border-vercel-border'
               }`}
             >
               <div className="space-y-2">
@@ -354,10 +354,11 @@ export const PluginMarket: React.FC = () => {
 
                   <div className="flex items-center gap-2">
                     {isCore && (
-                      <span className="label-caps text-[10px] bg-purple-100 text-purple-900 border border-purple-300 px-2 py-0.5 rounded-sm font-semibold flex items-center gap-1 shadow-2xs">
+                      <span className="label-caps text-[10px] bg-zinc-100 text-zinc-800 border border-zinc-200 px-2 py-0.5 rounded-[4px] font-medium flex items-center gap-1">
                         ⚡ 核心组件
                       </span>
                     )}
+
 
                     {installed ? (
                       <span className="label-caps text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-sm font-semibold flex items-center gap-1">

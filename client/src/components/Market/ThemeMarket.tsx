@@ -219,7 +219,7 @@ export const ThemeMarket: React.FC = () => {
                 filterMode === 'installed' ? 'bg-white shadow-sm font-semibold text-black' : 'text-gray-500'
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+              <Sparkles className="w-3.5 h-3.5 text-[#171717]" />
               已安装 ({installedThemes.length})
             </button>
           </div>
@@ -250,129 +250,147 @@ export const ThemeMarket: React.FC = () => {
 
           <button
             onClick={handleClearCache}
-            className="bg-rose-600 hover:bg-rose-700 text-white rounded-md px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-colors shadow-sm"
+            className="btn-secondary flex items-center gap-1.5 text-xs py-1.5 text-rose-600 hover:text-rose-700 bg-rose-50/50 border-rose-200 hover:bg-rose-50"
+            title="强行删除本地解析的主题离线缓存并重新从网络爬取"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <Trash2 className="w-3.5 h-3.5 text-rose-600" />
             清理市场缓存
           </button>
         </div>
       </div>
 
-      {/* Grid of Theme Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filtered.map((theme) => {
-          const installedInfo = getInstalledInfo(theme.name);
-          const isActive = installedInfo?.isActive;
+      {/* Main Grid List */}
+      {loading ? (
+        <div className="flex items-center justify-center h-64 text-gray-400 font-mono text-xs">
+          加载 Hexo 官方主题市场数据中...
+        </div>
+      ) : filteredThemes.length === 0 ? (
+        <div className="flex flex-col items-center justify-center h-64 border border-dashed border-gray-200 rounded-lg text-gray-400 space-y-2">
+          <p className="text-sm font-medium">未搜寻到匹配的主题</p>
+          <p className="text-xs font-mono">可以尝试更换关键词或清除缓存后刷新</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredThemes.map((theme) => {
+            const installedInfo = getInstalledInfo(theme.name);
+            const isActive = installedInfo?.isActive || false;
 
-          return (
-            <div key={theme.name} className="geist-card flex flex-col justify-between overflow-hidden group">
-              {/* Theme Screenshot Image Header */}
-              <div className="relative h-44 bg-zinc-100 overflow-hidden border-b border-vercel-border">
-                <img
-                  src={`https://hexo.io/themes/screenshots/${theme.name}.jpg`}
-                  alt={theme.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src =
-                      'https://via.placeholder.com/400x220/FAFAFA/171717?text=Hexo+Theme';
-                  }}
-                />
-                {theme.preview && (
-                  <a
-                    href={theme.preview}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="absolute top-2 right-2 bg-black/70 hover:bg-black text-white text-[10px] px-2 py-1 rounded-sm flex items-center gap-1 backdrop-blur-sm transition-colors"
-                  >
-                    <Eye className="w-3 h-3" /> 预览站
-                  </a>
-                )}
-                {isActive && (
-                  <span className="absolute top-2 left-2 bg-emerald-600 text-white font-mono text-[10px] font-semibold px-2 py-1 rounded-sm flex items-center gap-1 shadow-md">
-                    <CheckCircle2 className="w-3 h-3" /> 当前在用主题 (ACTIVE)
-                  </span>
-                )}
-              </div>
-
-              {/* Theme Info Details */}
-              <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between">
+            return (
+              <div
+                key={theme.name}
+                className="geist-card flex flex-col justify-between overflow-hidden bg-white group hover:shadow-md transition-shadow"
+              >
+                {/* Theme Screenshot Header */}
+                <div className="relative h-44 bg-zinc-100 overflow-hidden border-b border-vercel-border">
+                  <img
+                    src={`https://hexo.io/themes/screenshots/${theme.name}.jpg`}
+                    alt={theme.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        'https://via.placeholder.com/400x220/FAFAFA/171717?text=Hexo+Theme';
+                    }}
+                  />
+                  {theme.preview && (
                     <a
-                      href={theme.link}
+                      href={theme.preview}
                       target="_blank"
                       rel="noreferrer"
-                      className="font-medium text-base text-vercel-black hover:text-vercel-blue flex items-center gap-1"
+                      className="absolute top-2 right-2 bg-black/70 hover:bg-black text-white text-[10px] px-2 py-1 rounded-sm flex items-center gap-1 backdrop-blur-sm transition-colors"
                     >
-                      {theme.name}
-                      <ExternalLink className="w-3.5 h-3.5 opacity-60" />
+                      <Eye className="w-3 h-3" /> 预览站
                     </a>
-                  </div>
-                  <p className="text-xs text-gray-600 line-clamp-2 mt-1.5">{theme.description || '暂无描述'}</p>
-                </div>
-
-                <div className="space-y-3 pt-2">
-                  <div className="flex flex-wrap gap-1">
-                    {theme.tags.slice(0, 4).map((tag) => (
-                      <span
-                        key={tag}
-                        className="label-caps text-[10px] text-zinc-500 bg-zinc-50 border border-zinc-200 px-1.5 py-0.2 rounded-sm"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-
-                  {installedInfo ? (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setEditingThemeConfig(theme.name)}
-                        className="btn-secondary text-xs py-1.5 px-3 flex items-center justify-center gap-1 text-purple-700 bg-purple-50 border border-purple-300 hover:bg-purple-100 font-medium rounded-md shadow-2xs transition-colors shrink-0"
-                        title="可视化配置主题 Schema"
-                      >
-                        <Sliders className="w-3.5 h-3.5 text-purple-600" />
-                        配置 Schema
-                      </button>
-
-                      {!isActive ? (
-                        <button
-                          onClick={() => handleActivateTheme(theme.name)}
-                          className="btn-primary-pill text-xs flex-1 py-1.5 flex items-center justify-center gap-1 bg-emerald-600 hover:bg-emerald-700 font-medium"
-                        >
-                          <Play className="w-3.5 h-3.5" /> 启用该主题
-                        </button>
-                      ) : (
-                        <span className="text-xs text-emerald-700 font-mono font-semibold flex-1 text-center py-1.5 bg-emerald-50 rounded-md border border-emerald-200">
-                          运行中
-                        </span>
-                      )}
-
-                      {!isActive && (
-                        <button
-                          onClick={() => handleDeleteTheme(theme.name)}
-                          className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
-                          title="删除主题目录"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  ) : (
-
-                    <button
-                      onClick={() => handleInstallTheme(theme.name, theme.link)}
-                      className="btn-primary-pill text-xs w-full py-1.5 flex items-center justify-center gap-1.5"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      一键 Git Clone 主题
-                    </button>
+                  )}
+                  {isActive && (
+                    <span className="absolute top-2 left-2 bg-emerald-600 text-white font-mono text-[10px] font-semibold px-2 py-1 rounded-sm flex items-center gap-1 shadow-md">
+                      <CheckCircle2 className="w-3 h-3" /> 当前在用主题 (ACTIVE)
+                    </span>
                   )}
                 </div>
+
+                {/* Theme Info Details */}
+                <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <a
+                        href={theme.link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-medium text-base text-vercel-black hover:text-vercel-blue flex items-center gap-1"
+                      >
+                        {theme.name}
+                        <ExternalLink className="w-3.5 h-3.5 opacity-60" />
+                      </a>
+                    </div>
+                    <p className="text-xs text-gray-600 line-clamp-2 mt-1.5">{theme.description || '暂无描述'}</p>
+                  </div>
+
+                  <div className="space-y-3 pt-2">
+                    <div className="flex flex-wrap gap-1">
+                      {theme.tags.slice(0, 4).map((tag) => (
+                        <span
+                          key={tag}
+                          className="label-caps text-[10px] text-zinc-600 bg-zinc-100 border border-zinc-200 px-1.5 py-0.5 rounded-[4px]"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+
+                    {installedInfo ? (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setEditingThemeConfig(theme.name)}
+                          className="btn-secondary text-xs py-1.5 px-3 flex items-center justify-center gap-1 text-[#171717] bg-white border border-zinc-200 hover:bg-zinc-50 font-medium rounded-[6px] shadow-2xs transition-colors shrink-0 focus:border-[#0070F3] focus:ring-1 focus:ring-[#0070F3]"
+                          title="可视化配置主题 Schema"
+                        >
+                          <Sliders className="w-3.5 h-3.5 text-[#171717]" />
+                          配置 Schema
+                        </button>
+
+                        {!isActive ? (
+                          <button
+                            onClick={() => handleActivateTheme(theme.name)}
+                            className="btn-primary-pill text-xs flex-1 py-1.5 flex items-center justify-center gap-1 bg-[#171717] hover:bg-black text-white font-medium rounded-[6px]"
+                          >
+                            <Play className="w-3.5 h-3.5" /> 启用该主题
+                          </button>
+                        ) : (
+                          <span className="text-xs text-emerald-700 font-mono font-semibold flex-1 text-center py-1.5 bg-emerald-50 rounded-[6px] border border-emerald-200">
+                            运行中
+                          </span>
+                        )}
+
+                        {!isActive && (
+                          <button
+                            onClick={() => handleDeleteTheme(theme.name)}
+                            className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-[6px] transition-colors"
+                            title="删除主题目录"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => handleInstallTheme(theme.name, theme.link)}
+                        className="btn-primary-pill text-xs w-full py-1.5 flex items-center justify-center gap-1.5 bg-[#171717] hover:bg-black text-white rounded-[6px]"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        一键 Git Clone 主题
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+
+
+        </div>
+      )}
+
+
 
       {/* Real-time Streaming Terminal Modal */}
       {consoleModal.show && (
