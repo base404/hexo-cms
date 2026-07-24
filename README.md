@@ -21,6 +21,8 @@
   </p>
 
   <p align="center">
+    <img src="https://img.shields.io/badge/Node.js-24.16.0-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js" />
+    <img src="https://img.shields.io/badge/npm-12.0.1-CB3837?style=for-the-badge&logo=npm&logoColor=white" alt="npm" />
     <img src="https://img.shields.io/badge/React-18.3-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React" />
     <img src="https://img.shields.io/badge/Vite-5.4-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
     <img src="https://img.shields.io/badge/Express-4.19-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express" />
@@ -122,10 +124,11 @@
 
 ## 🚀 快速开始 (Quick Start)
 
-### 环境要求 (Prerequisites)
-- [Node.js](https://nodejs.org/) `>= 18.0.0`
-- [Git](https://git-scm.com/)
-- [Hexo CLI](https://hexo.io/) `>= 7.0.0` (可选，系统自带一键建站向导)
+### 环境要求与开发环境 (Prerequisites & Development Environment)
+- **Node.js**: `>= 18.0.0` (推荐/测试验证版本: `v24.16.0`)
+- **npm**: `>= 9.0.0` (推荐/测试验证版本: `12.0.1`)
+- **Git**: 必需
+- **Hexo CLI**: `>= 7.0.0` (可选，系统自带一键建站向导)
 
 ### 安装与运行 (Setup & Run)
 
