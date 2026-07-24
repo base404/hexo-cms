@@ -110,7 +110,8 @@ groups:
 
   it('should get and save theme config using Hexo 5+ _config.<theme>.yml override mechanism', () => {
     const chirpyDir = path.join(themesDir, 'chirpy');
-    fs.writeFileSync(path.join(chirpyDir, '_config.yml'), 'subtitle: Hello Chirpy\naccent_color: "#7952b3"\n', 'utf8');
+    const baseConfigWithComments = `# 主题副标题\nsubtitle: Hello Chirpy\n# 主题特别强调色\naccent_color: "#7952b3"\n`;
+    fs.writeFileSync(path.join(chirpyDir, '_config.yml'), baseConfigWithComments, 'utf8');
 
     // 1. Get initial merged config (no override yet)
     let config = service.getThemeConfig(sampleBlogDir, 'chirpy');
@@ -127,6 +128,11 @@ groups:
     // Verify _config.chirpy.yml was created in blog root
     const overrideFile = path.join(sampleBlogDir, '_config.chirpy.yml');
     expect(fs.existsSync(overrideFile)).toBe(true);
+
+    // Verify comments from theme _config.yml were preserved in _config.chirpy.yml
+    const overrideContent = fs.readFileSync(overrideFile, 'utf8');
+    expect(overrideContent).toContain('# 主题副标题');
+    expect(overrideContent).toContain('# 主题特别强调色');
 
     // 3. Get merged config again, verify user overrides take precedence
     config = service.getThemeConfig(sampleBlogDir, 'chirpy');

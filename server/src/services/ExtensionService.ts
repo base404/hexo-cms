@@ -264,9 +264,50 @@ export class ExtensionService {
 
   saveThemeConfig(blogDir: string, themeName: string, config: Record<string, any>): boolean {
     const overrideConfigPath = path.join(blogDir, `_config.${themeName}.yml`);
+    const baseConfigPath = path.join(blogDir, 'themes', themeName, '_config.yml');
+
     try {
-      const yamlString = stringify(config);
-      fs.writeFileSync(overrideConfigPath, yamlString, 'utf8');
+      let templateContent = '';
+      if (fs.existsSync(overrideConfigPath)) {
+        const overrideContent = fs.readFileSync(overrideConfigPath, 'utf8');
+        if (overrideContent.includes('#') || !fs.existsSync(baseConfigPath)) {
+          templateContent = overrideContent;
+        } else {
+          templateContent = fs.readFileSync(baseConfigPath, 'utf8');
+        }
+      } else if (fs.existsSync(baseConfigPath)) {
+        templateContent = fs.readFileSync(baseConfigPath, 'utf8');
+      }
+
+      const doc = parseDocument(templateContent);
+
+      const updateNode = (pathKeys: string[], value: any) => {
+        if (value === undefined) return;
+
+        const isPlainObject =
+          value !== null &&
+          typeof value === 'object' &&
+          !Array.isArray(value) &&
+          Object.getPrototypeOf(value) === Object.prototype;
+
+        if (isPlainObject) {
+          const targetNode = pathKeys.length === 0 ? doc.contents : doc.getIn(pathKeys);
+          if (targetNode && typeof targetNode === 'object' && 'get' in targetNode) {
+            for (const [subKey, subVal] of Object.entries(value)) {
+              updateNode([...pathKeys, subKey], subVal);
+            }
+            return;
+          }
+        }
+
+        doc.setIn(pathKeys, value);
+      };
+
+      for (const [key, val] of Object.entries(config)) {
+        updateNode([key], val);
+      }
+
+      fs.writeFileSync(overrideConfigPath, doc.toString(), 'utf8');
       this.clearHexoCache(blogDir);
       return true;
     } catch {
