@@ -17,6 +17,7 @@ import {
   Share2,
   Plus,
   Trash2,
+  RotateCw,
 } from 'lucide-react';
 
 export interface ThemeSchemaField {
@@ -104,6 +105,7 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
   const [initialData, setInitialData] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [restarting, setRestarting] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -162,8 +164,11 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
     }));
   };
 
-  const handleSave = async () => {
+  const handleSave = async (shouldRestart = false) => {
     setSaving(true);
+    if (shouldRestart) {
+      setRestarting(true);
+    }
     try {
       const res = await fetch(`/api/themes/${themeName}/config`, {
         method: 'POST',
@@ -172,12 +177,69 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
       });
 
       if (res.ok) {
-        showToast(
-          `主题《${themeName}》配置已更新至 _config.${themeName}.yml`,
-          'success',
-          '配置保存成功'
-        );
         setInitialData(formData);
+        if (!shouldRestart) {
+          showToast(
+            `主题《${themeName}》配置已更新至 _config.${themeName}.yml`,
+            'success',
+            '配置保存成功'
+          );
+        } else {
+          showToast('正在重启 Hexo 本地预览服务...', 'info', '服务重启中');
+          window.dispatchEvent(
+            new CustomEvent('hexo-server-log-chunk', {
+              detail: `🔄 [主题配置] 用户保存《${themeName}》配置并触发 Hexo Server 重启...\n`,
+            })
+          );
+
+          try {
+            const restartResponse = await fetch('/api/server/restart', { method: 'POST' });
+            if (!restartResponse.body) throw new Error('Response body error');
+
+            const reader = restartResponse.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let fullOutput = '';
+
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              const text = decoder.decode(value, { stream: true });
+              fullOutput += text;
+              window.dispatchEvent(
+                new CustomEvent('hexo-server-log-chunk', { detail: text })
+              );
+            }
+
+            const statusRes = await fetch('/api/server/status');
+            let updatedStatus: any = null;
+            if (statusRes.ok) {
+              updatedStatus = await statusRes.json();
+            }
+
+            if (
+              updatedStatus?.lastError ||
+              !updatedStatus?.running ||
+              fullOutput.includes('[ERROR]')
+            ) {
+              const errorDetail =
+                updatedStatus?.lastError || '重启异常终止，请在控制台查看详情';
+              showToast(`重启失败: ${errorDetail}`, 'error', 'Hexo 服务异常');
+            } else {
+              showToast(
+                '配置保存成功，Hexo 预览服务已成功重启并全局生效！',
+                'success',
+                '重启完毕'
+              );
+            }
+          } catch (restartErr: any) {
+            showToast(`重启失败: ${restartErr.message}`, 'error');
+            window.dispatchEvent(
+              new CustomEvent('hexo-server-log-chunk', {
+                detail: `❌ [ERROR] 重启异常: ${restartErr.message}\n`,
+              })
+            );
+          }
+        }
       } else {
         const err = await res.json();
         showToast(`保存失败: ${err.error || '未知错误'}`, 'error');
@@ -186,6 +248,7 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
       showToast(`保存异常: ${e.message}`, 'error');
     } finally {
       setSaving(false);
+      setRestarting(false);
     }
   };
 
@@ -505,12 +568,21 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
               </button>
             )}
             <button
-              onClick={handleSave}
-              disabled={saving}
+              onClick={() => handleSave(false)}
+              disabled={saving || restarting}
               className="px-4 py-1.5 text-xs font-medium bg-[#171717] hover:bg-black text-white rounded-[6px] shadow-2xs transition-colors flex items-center gap-1.5 disabled:opacity-50"
             >
               <Save className="w-3.5 h-3.5 text-emerald-400" />
-              {saving ? '保存中...' : '保存配置'}
+              {saving && !restarting ? '保存中...' : '保存配置'}
+            </button>
+            <button
+              onClick={() => handleSave(true)}
+              disabled={saving || restarting}
+              className="px-4 py-1.5 text-xs font-medium bg-[#171717] hover:bg-black text-white rounded-[6px] shadow-2xs transition-colors flex items-center gap-1.5 disabled:opacity-50"
+              title="保存配置并自动重启 Hexo 预览服务"
+            >
+              <RotateCw className={`w-3.5 h-3.5 text-emerald-400 ${restarting ? 'animate-spin' : ''}`} />
+              {restarting ? '重启中...' : '保存配置且重启'}
             </button>
             <button
               onClick={onClose}
