@@ -124,13 +124,22 @@
 
 ## 🚀 快速开始 (Quick Start)
 
-### 环境要求与开发环境 (Prerequisites & Development Environment)
+### 方式一：独立免安装绿色版 (Node.js SEA 单二进制 - 推荐)
+无需全局配置 Node.js 源码项目，直接从 [GitHub Releases](../../releases) 下载对应平台的打包压缩包：
+
+* **Windows 用户**: 下载 `hexo-cms-win-x64.zip`，解压后双击运行 **`hexo-cms.exe`**。
+* **Linux 用户**: 下载 `hexo-cms-linux-x64.tar.gz`，解压后运行 **`./hexo-cms`**。
+
+启动后访问本地面板：**`http://localhost:4001`**。
+
+---
+
+### 方式二：源码运行与开发模式 (Development & Setup)
+
+#### 环境要求 (Prerequisites)
 - **Node.js**: `>= 18.0.0` (推荐/测试验证版本: `v24.16.0`)
 - **npm**: `>= 9.0.0` (推荐/测试验证版本: `12.0.1`)
 - **Git**: 必需
-- **Hexo CLI**: `>= 7.0.0` (可选，系统自带一键建站向导)
-
-### 安装与运行 (Setup & Run)
 
 ```bash
 # 1. 克隆项目仓库
@@ -142,8 +151,11 @@ cd hexo-cms
 # 3. 安装依赖包
 npm install
 
-# 4. 启动前端与后端协同开发 / 服务
+# 4. 启动前端与后端协同开发服务
 npm start
+
+# 5. (可选) 本地编译打包为单二进制 SEA 程序
+npm run build:sea
 ```
 
 访问本地服务地址：**`http://localhost:4001`**

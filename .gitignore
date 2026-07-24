@@ -28,3 +28,7 @@ config.json
 .idea/
 *.swp
 *.swo
+
+# Release packaging
+release-pkgs/
+

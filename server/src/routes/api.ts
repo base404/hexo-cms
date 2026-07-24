@@ -22,7 +22,11 @@ const customScriptService = new CustomScriptService();
 const buildService = new BuildService();
 
 function getConfigFile(): string {
-  return path.join(process.cwd(), 'config.json');
+  const cwdConfig = path.join(process.cwd(), 'config.json');
+  if (fs.existsSync(cwdConfig)) return cwdConfig;
+  const exeConfig = path.join(path.dirname(process.execPath), 'config.json');
+  if (fs.existsSync(exeConfig)) return exeConfig;
+  return cwdConfig;
 }
 
 function getActiveBlogDir(): string {
