@@ -59,6 +59,7 @@ export class HexoInstanceManager {
       // Dynamic import or instantiate Hexo if available
       let HexoClass: any;
       try {
+        // @ts-ignore
         HexoClass = (await import('hexo')).default;
       } catch {
         // Fallback dummy object for mock/testing environment when hexo is not installed in workspace

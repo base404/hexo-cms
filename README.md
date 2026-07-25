@@ -29,6 +29,7 @@
     <img src="https://img.shields.io/badge/TypeScript-5.5-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
     <img src="https://img.shields.io/badge/TailwindCSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="TailwindCSS" />
     <img src="https://img.shields.io/badge/Hexo-7.2-0E83CD?style=for-the-badge&logo=hexo&logoColor=white" alt="Hexo" />
+    <img src="https://img.shields.io/badge/Docker-Supported-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
   </p>
 
   <br />
@@ -159,6 +160,45 @@ npm run build:sea
 ```
 
 访问本地服务地址：**`http://localhost:4001`**
+
+---
+
+### 方式三：Docker 容器运行 (Docker & Docker Compose)
+
+适用于服务器部署或依赖隔离运行，无需在宿主机环境配置 Node.js 即可运行。
+
+#### 1. 使用 Docker Compose 一键启动（推荐）
+
+```bash
+# 1. 克隆项目仓库
+git clone https://github.com/base404/hexo-cms.git
+cd hexo-cms
+
+# 2. 一键构建并后台启动容器
+docker-compose up -d
+
+# 3. 查看运行日志
+docker-compose logs -f
+```
+
+#### 2. 使用 Docker CLI 手动构建与运行
+
+```bash
+# 1. 构建 Docker 镜像
+docker build -t hexo-cms .
+
+# 2. 启动容器 (挂载宿主机博客路径至 /app/blog，映射 4001 Web/API 端口与 4000 Hexo 预览端口)
+docker run -d \
+  --name hexo-cms \
+  -p 4001:4001 \
+  -p 4000:4000 \
+  -v /path/to/your/blog:/app/blog \
+  -e BLOG_DIR=/app/blog \
+  hexo-cms
+```
+
+* **管理后台访问地址**: **`http://localhost:4001`**
+* **Hexo 预览服务地址**: **`http://localhost:4000`**
 
 <br />
 

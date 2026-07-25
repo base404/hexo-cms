@@ -1,0 +1,11 @@
+node_modules
+dist
+client/dist
+release-pkgs
+.cache
+.git
+.gitignore
+*.log
+Dockerfile
+docker-compose*
+.dockerignore

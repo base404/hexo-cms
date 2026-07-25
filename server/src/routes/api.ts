@@ -30,6 +30,9 @@ function getConfigFile(): string {
 }
 
 function getActiveBlogDir(): string {
+  if (process.env.BLOG_DIR) {
+    return process.env.BLOG_DIR;
+  }
   try {
     const configPath = getConfigFile();
     if (fs.existsSync(configPath)) {
@@ -37,7 +40,7 @@ function getActiveBlogDir(): string {
       if (cfg.blogDir) return cfg.blogDir;
     }
   } catch {}
-  return 'C:/Users/Nuoka/blog';
+  return process.cwd();
 }
 
 function updateActiveBlogDir(newDir: string): void {
@@ -702,7 +705,7 @@ apiRouter.post('/taxonomy/add', (req, res) => {
   try {
     const blogDir = getActiveBlogDir();
     const result = TaxonomyService.addCustomTaxonomy(blogDir, type, name);
-    return res.json({ success: true, ...result });
+    return res.json(result);
   } catch (e: any) {
     return res.status(500).json({ error: e.message });
   }

@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  hexo-cms:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hexo-cms
+    restart: unless-stopped
+    ports:
+      - "4001:4001"
+      - "4000:4000"
+    environment:
+      - PORT=4001
+      - NODE_ENV=production
+      - BLOG_DIR=/app/blog
+    volumes:
+      # 挂载宿主机的 Hexo 博客根目录到容器内部的 /app/blog
+      - ./blog:/app/blog
