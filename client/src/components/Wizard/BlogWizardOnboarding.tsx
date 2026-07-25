@@ -176,7 +176,7 @@ export const BlogWizardOnboarding: React.FC<BlogWizardOnboardingProps> = ({
             className="w-full bg-zinc-900 hover:bg-black text-white text-sm font-medium py-3.5 px-6 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
           >
             <Sparkles className="w-4 h-4 text-amber-400" />
-            {initializing ? '正在流式推流执行建站命令...' : '✨ 一键启动 Hexo 官方 CLI 标准初始化建站'}
+            {initializing ? '正在流式推流执行建站命令...' : '一键启动 Hexo 官方 CLI 标准初始化建站'}
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
