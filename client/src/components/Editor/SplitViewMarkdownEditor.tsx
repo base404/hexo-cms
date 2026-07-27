@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { ImageUploadInput } from '../Common/ImageUploadInput';
 import { marked } from 'marked';
 import hljs from 'highlight.js';
 import mermaid from 'mermaid';
@@ -55,7 +56,65 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
   const historyIndexRef = useRef<number>(0);
   const isUndoRedoAction = useRef<boolean>(false);
 
+  const editorRef = useRef<HTMLTextAreaElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+  const scrollingSourceRef = useRef<'editor' | 'preview' | null>(null);
+  const scrollTimeoutRef = useRef<any>(null);
+
+  const resetScrollingSource = () => {
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+    scrollTimeoutRef.current = setTimeout(() => {
+      scrollingSourceRef.current = null;
+    }, 150);
+  };
+
+  const handleEditorScroll = () => {
+    if (viewMode !== 'split') return;
+    if (scrollingSourceRef.current === 'preview') return;
+
+    scrollingSourceRef.current = 'editor';
+    const editor = editorRef.current;
+    const preview = previewRef.current;
+
+    if (editor && preview) {
+      const editorScrollable = editor.scrollHeight - editor.clientHeight;
+      if (editorScrollable > 0) {
+        const percentage = editor.scrollTop / editorScrollable;
+        const previewScrollable = preview.scrollHeight - preview.clientHeight;
+        preview.scrollTop = percentage * previewScrollable;
+      }
+    }
+    resetScrollingSource();
+  };
+
+  const handlePreviewScroll = () => {
+    if (viewMode !== 'split') return;
+    if (scrollingSourceRef.current === 'editor') return;
+
+    scrollingSourceRef.current = 'preview';
+    const editor = editorRef.current;
+    const preview = previewRef.current;
+
+    if (editor && preview) {
+      const previewScrollable = preview.scrollHeight - preview.clientHeight;
+      if (previewScrollable > 0) {
+        const percentage = preview.scrollTop / previewScrollable;
+        const editorScrollable = editor.scrollHeight - editor.clientHeight;
+        editor.scrollTop = percentage * editorScrollable;
+      }
+    }
+    resetScrollingSource();
+  };
+
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const formatDateForInput = (dStr?: string) => {
     if (!dStr) return new Date().toISOString().slice(0, 16);
@@ -512,8 +571,10 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
         {(viewMode === 'split' || viewMode === 'source') && (
           <div className={`h-full flex flex-col ${viewMode === 'split' ? 'w-1/2 border-r border-vercel-border' : 'w-full'}`}>
             <textarea
+              ref={editorRef}
               value={content}
               onChange={(e) => handleContentChange(e.target.value)}
+              onScroll={handleEditorScroll}
               placeholder="开始编写 Markdown 内容..."
               className="w-full h-full p-4 font-mono text-xs text-vercel-black bg-white outline-none resize-none leading-relaxed select-text"
               spellCheck={false}
@@ -525,6 +586,7 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
         {(viewMode === 'split' || viewMode === 'preview') && (
           <div
             ref={previewRef}
+            onScroll={handlePreviewScroll}
             className={`h-full overflow-y-auto p-6 bg-white markdown-body ${
               viewMode === 'split' ? 'w-1/2' : 'w-full'
             }`}
@@ -577,12 +639,10 @@ export const SplitViewMarkdownEditor: React.FC<SplitViewMarkdownEditorProps> = (
               {/* Cover Image URL */}
               <div className="space-y-1">
                 <label className="font-medium text-gray-700">文章封面图 (cover)</label>
-                <input
-                  type="text"
+                <ImageUploadInput
                   value={meta.cover || meta.image || ''}
-                  onChange={(e) => setMeta({ ...meta, cover: e.target.value })}
-                  placeholder="/images/cover.png 或 URL"
-                  className="w-full bg-white border border-vercel-border rounded px-2.5 py-1.5 outline-none focus:border-vercel-blue font-mono text-xs"
+                  onChange={(newUrl) => setMeta({ ...meta, cover: newUrl })}
+                  placeholder="/images/cover.png 或上传..."
                 />
               </div>
 

@@ -9,6 +9,7 @@ export interface ThemeItem {
   description: string;
   link: string;
   preview?: string;
+  cover?: string;
   tags: string[];
 }
 
@@ -158,7 +159,7 @@ export const ThemeMarket: React.FC = () => {
   const handleDeleteTheme = (name: string) => {
     confirm({
       title: '确认删除主题',
-      message: `确定要删除物理主题文件夹 themes/${name} 吗？`,
+      message: `确定要删除主题源码文件夹 themes/${name} 吗？(根目录配置文件 _config.${name}.yml 将予以保留)`,
       confirmText: '确认删除',
       onConfirm: async () => {
         try {
@@ -168,7 +169,7 @@ export const ThemeMarket: React.FC = () => {
             body: JSON.stringify({ name }),
           });
           if (res.ok) {
-            showToast(`已删除主题目录 themes/${name}`, 'success', '删除成功');
+            showToast(`已删除主题目录 themes/${name}，根目录配置文件 _config.${name}.yml 已保留`, 'success', '主题删除成功');
             fetchInstalledThemes();
           } else {
             showToast('删除失败', 'error');
@@ -279,7 +280,7 @@ export const ThemeMarket: React.FC = () => {
               {/* Theme Screenshot Image Header */}
               <div className="relative h-44 bg-zinc-100 overflow-hidden border-b border-zinc-200">
                 <img
-                  src={`https://hexo.io/themes/screenshots/${theme.name}.jpg`}
+                  src={theme.cover || `https://hexo.io/themes/screenshots/${theme.name}.jpg`}
                   alt={theme.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   onError={(e) => {
@@ -335,14 +336,16 @@ export const ThemeMarket: React.FC = () => {
 
                   {installedInfo ? (
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setEditingThemeConfig(theme.name)}
-                        className="bg-white border border-zinc-200 hover:bg-zinc-50 text-[#171717] text-xs py-1.5 px-3 flex items-center justify-center gap-1.5 font-medium rounded-[6px] shadow-2xs transition-colors shrink-0"
-                        title="可视化配置主题 Schema"
-                      >
-                        <Sliders className="w-3.5 h-3.5 text-zinc-700" />
-                        配置 Schema
-                      </button>
+                      {installedInfo.hasSchema && (
+                        <button
+                          onClick={() => setEditingThemeConfig(theme.name)}
+                          className="bg-white border border-zinc-200 hover:bg-zinc-50 text-[#171717] text-xs py-1.5 px-3 flex items-center justify-center gap-1.5 font-medium rounded-[6px] shadow-2xs transition-colors shrink-0"
+                          title="可视化配置主题 Schema"
+                        >
+                          <Sliders className="w-3.5 h-3.5 text-zinc-700" />
+                          配置 Schema
+                        </button>
+                      )}
 
                       {!isActive ? (
                         <button
@@ -357,7 +360,7 @@ export const ThemeMarket: React.FC = () => {
                         </span>
                       )}
 
-                      {!isActive && (
+                      {!isActive && theme.name.toLowerCase() !== 'landscape' && (
                         <button
                           onClick={() => handleDeleteTheme(theme.name)}
                           className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-[6px] transition-colors"

@@ -3,6 +3,7 @@ export interface MarketItem {
   description: string;
   link: string;
   preview?: string;
+  cover?: string;
   tags: string[];
 }
 

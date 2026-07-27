@@ -3,6 +3,7 @@ export interface MarketItem {
   description: string;
   link: string;
   preview?: string;
+  cover?: string;
   tags: string[];
 }
 
@@ -32,6 +33,7 @@ export const OFFICIAL_PLUGINS: MarketItem[] = [
 ];
 
 export const OFFICIAL_THEMES: MarketItem[] = [
+  { name: 'landscape', description: 'Hexo 官方默认经典主题 (简约、原生支持 EJS 渲染与经典双栏布局)', link: 'https://github.com/hexojs/hexo-theme-landscape', preview: 'https://hexo.io', tags: ['official', 'default', 'classic', '官方默认'] },
   { name: 'Bootstrap-Blog', description: 'A simple Twitter Bootstrap blog theme', link: 'https://github.com/hexojs/hexo-theme-bootstrap-blog', preview: 'http://hexo.io', tags: ['bootstrap', 'simple', 'responsive'] },
   { name: 'A-Boy', description: 'A Clear and Light Theme', link: 'https://github.com/huweihuang/hexo-theme-huweihuang', preview: 'https://www.huweihuang.com/', tags: ['Clear', 'Light', 'Simple'] },
   { name: 'A-Pure', description: 'A modern and simple theme for Hexo.', link: 'https://github.com/renbaoshuo/hexo-theme-pure', preview: 'https://blog.baoshuo.ren/', tags: ['simple', 'clean', 'modern', '中文'] },

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { useToast } from '../Common/ToastContext';
+import { ImageUploadInput } from '../Common/ImageUploadInput';
 import {
   X,
   Save,
@@ -476,16 +477,14 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
                   </div>
                   <div>
                     <label className="text-[10px] font-mono text-zinc-500">头像 (avatar)</label>
-                    <input
-                      type="text"
+                    <ImageUploadInput
                       value={item.avatar || ''}
-                      onChange={(e) => {
+                      onChange={(newUrl) => {
                         const next = [...arr];
-                        next[idx] = { ...next[idx], avatar: e.target.value };
+                        next[idx] = { ...next[idx], avatar: newUrl };
                         handleFieldChange(field.name, next);
                       }}
-                      placeholder="https://..."
-                      className="w-full bg-white border border-zinc-200 rounded px-2.5 py-1 text-xs outline-none focus:border-[#0070F3] font-mono shadow-2xs"
+                      placeholder="图片 URL 或上传..."
                     />
                   </div>
                   <div>
@@ -520,8 +519,24 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
         );
       }
 
+      case 'image':
       case 'text':
-      default:
+      default: {
+        const isImageType =
+          field.type === 'image' ||
+          /avatar|favicon|logo|image|cover|photo|pic|icon/i.test(field.name) ||
+          /头像|图标|图片|封面|favicon/i.test(field.label || '');
+
+        if (isImageType) {
+          return (
+            <ImageUploadInput
+              value={val !== undefined ? String(val) : ''}
+              onChange={(newUrl) => handleFieldChange(field.name, newUrl)}
+              placeholder={field.description || '输入图片 URL 或点击/拖拽上传图片...'}
+            />
+          );
+        }
+
         return (
           <input
             type="text"
@@ -530,6 +545,7 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
             className="w-full bg-white border border-zinc-200 rounded-[6px] px-3 py-1.5 text-xs outline-none focus:border-[#0070F3] focus:ring-1 focus:ring-[#0070F3] font-mono shadow-2xs transition-colors"
           />
         );
+      }
     }
   };
 

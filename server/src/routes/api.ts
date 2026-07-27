@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import * as path from 'path';
 import * as fs from 'fs';
+import { execSync } from 'child_process';
 import matter from 'gray-matter';
 import { LockManager } from '../services/LockManager.js';
 import { MarketService } from '../services/MarketService.js';
@@ -708,6 +709,155 @@ apiRouter.post('/taxonomy/add', (req, res) => {
     return res.json(result);
   } catch (e: any) {
     return res.status(500).json({ error: e.message });
+  }
+});
+
+// 通用图片/图标上传 API (用于站点 Favicon, 侧边栏头像, 文章封面图等)
+apiRouter.post('/upload/image', (req, res) => {
+  try {
+    const { fileData, filename } = req.body;
+    if (!fileData || typeof fileData !== 'string') {
+      return res.status(400).json({ error: 'fileData base64 is required' });
+    }
+
+    const blogDir = getActiveBlogDir();
+    const sourceImagesDir = path.join(blogDir, 'source', 'images');
+    if (!fs.existsSync(sourceImagesDir)) {
+      fs.mkdirSync(sourceImagesDir, { recursive: true });
+    }
+
+    // 准确提取纯 base64 数据 (支持 image/x-icon, image/vnd.microsoft.icon 等包含连字符的 MIME)
+    const base64Idx = fileData.indexOf('base64,');
+    const cleanBase64 = base64Idx !== -1 ? fileData.slice(base64Idx + 7) : fileData;
+    const buffer = Buffer.from(cleanBase64, 'base64');
+
+    const origName = (filename || 'uploaded_image.png').replace(/[^\w.-]/g, '_');
+    const timestamp = Date.now();
+    const targetFilename = `${timestamp}_${origName}`;
+    const savePath = path.join(sourceImagesDir, targetFilename);
+    const publicUrl = `/images/${targetFilename}`;
+
+    // 1. 写入物理图片至 source/images/
+    fs.writeFileSync(savePath, buffer);
+
+    // 2. 如果当前 Hexo 的 public 静态预览目录存在，直接同步复制一份，确保未发起的重启前预览服务立刻能读取文件
+    const publicImagesDir = path.join(blogDir, 'public', 'images');
+    if (fs.existsSync(path.join(blogDir, 'public'))) {
+      if (!fs.existsSync(publicImagesDir)) {
+        fs.mkdirSync(publicImagesDir, { recursive: true });
+      }
+      fs.writeFileSync(path.join(publicImagesDir, targetFilename), buffer);
+    }
+
+    // 3. 如果上传的是 favicon 相关的图标，同步覆盖 source/favicon.ico 与 public/favicon.ico
+    if (origName.toLowerCase().includes('favicon')) {
+      try {
+        const rootFaviconPath = path.join(blogDir, 'source', 'favicon.ico');
+        fs.writeFileSync(rootFaviconPath, buffer);
+        if (fs.existsSync(path.join(blogDir, 'public'))) {
+          fs.writeFileSync(path.join(blogDir, 'public', 'favicon.ico'), buffer);
+        }
+      } catch {}
+    }
+
+    // 清理 Hexo 渲染数据库与 public 缓存
+    try {
+      const dbPath = path.join(blogDir, 'db.json');
+      if (fs.existsSync(dbPath)) fs.rmSync(dbPath, { force: true });
+      const publicDir = path.join(blogDir, 'public');
+      if (fs.existsSync(publicDir)) fs.rmSync(publicDir, { recursive: true, force: true });
+    } catch {}
+
+    return res.json({
+      success: true,
+      url: publicUrl,
+      filename: targetFilename,
+      size: buffer.length,
+    });
+  } catch (e: any) {
+    return res.status(500).json({ error: `上传文件失败: ${e.message}` });
+  }
+});
+
+// Git 状态与一键初始化 / 绑定 API
+apiRouter.get('/git/status', (_req, res) => {
+  try {
+    const blogDir = getActiveBlogDir();
+    const gitDir = path.join(blogDir, '.git');
+    let hasGitRepo = fs.existsSync(gitDir);
+
+    if (!hasGitRepo) {
+      try {
+        const check = execSync('git rev-parse --is-inside-work-tree', { cwd: blogDir, encoding: 'utf8' }).trim();
+        hasGitRepo = check === 'true';
+      } catch {}
+    }
+
+    let hasRemote = false;
+    let remoteUrl = '';
+
+    if (hasGitRepo) {
+      try {
+        remoteUrl = execSync('git remote get-url origin', { cwd: blogDir, encoding: 'utf8' }).trim();
+        hasRemote = !!remoteUrl;
+      } catch {
+        try {
+          const remotes = execSync('git remote -v', { cwd: blogDir, encoding: 'utf8' }).trim();
+          hasRemote = !!remotes;
+          if (remotes) {
+            const match = remotes.match(/origin\s+([^\s]+)/);
+            if (match) remoteUrl = match[1];
+          }
+        } catch {}
+      }
+    }
+
+    return res.json({
+      hasGitRepo,
+      hasRemote,
+      remoteUrl,
+      blogDir,
+    });
+  } catch (e: any) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+apiRouter.post('/git/init', (_req, res) => {
+  try {
+    const blogDir = getActiveBlogDir();
+    
+    // 执行 git init 与重命名默认分支为 main
+    execSync('git init', { cwd: blogDir, encoding: 'utf8' });
+    try {
+      execSync('git branch -M main', { cwd: blogDir, encoding: 'utf8' });
+    } catch {}
+
+    return res.json({ success: true, message: 'Git 仓库初始化成功' });
+  } catch (e: any) {
+    return res.status(500).json({ error: `Git 初始化失败: ${e.message}` });
+  }
+});
+
+apiRouter.post('/git/set-remote', (req, res) => {
+  try {
+    const { remoteUrl } = req.body;
+    if (!remoteUrl || typeof remoteUrl !== 'string') {
+      return res.status(400).json({ error: 'remoteUrl 是必需参数' });
+    }
+
+    const blogDir = getActiveBlogDir();
+    const cleanUrl = remoteUrl.trim();
+
+    try {
+      execSync(`git remote add origin "${cleanUrl}"`, { cwd: blogDir, encoding: 'utf8' });
+    } catch {
+      execSync(`git remote set-url origin "${cleanUrl}"`, { cwd: blogDir, encoding: 'utf8' });
+    }
+
+    return res.json({ success: true, remoteUrl: cleanUrl });
+  } catch (e: any) {
+    return res.status(500).json({ error: `绑定远程仓库失败: ${e.message}` });
   }
 });
 

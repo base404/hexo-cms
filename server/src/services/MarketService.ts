@@ -110,7 +110,16 @@ export class MarketService {
       description: '现代三栏 Chirpy 风格博客主题 (内置 Hexo Theme Schema，支持 Glassmorphism、TOC、阅读进度条等可视化配置)',
       link: 'https://github.com/base404/hexo-theme-chirpy',
       preview: 'https://www.airbozh.cn/',
+      cover: '/themes/chirpy.png',
       tags: ['精选推荐', '三栏布局', 'Schema', 'Glassmorphism', 'TOC'],
+    };
+
+    const featuredLandscape: MarketItem = {
+      name: 'landscape',
+      description: 'Hexo 官方默认经典主题 (简约、原生支持 EJS 渲染与经典双栏布局)',
+      link: 'https://github.com/hexojs/hexo-theme-landscape',
+      preview: 'https://hexo.io',
+      tags: ['官方默认', '经典', 'EJS'],
     };
 
     const cached = this.readCache('themes.json', 24 * 60 * 60 * 1000);
@@ -150,9 +159,11 @@ export class MarketService {
       }
     }
 
-    // Ensure chirpy is at top, avoiding duplicates
-    const filtered = resultItems.filter((i) => i.name.toLowerCase() !== 'chirpy');
-    return [featuredChirpy, ...filtered];
+    // Ensure chirpy & landscape are at top, avoiding duplicates
+    const filtered = resultItems.filter(
+      (i) => i.name.toLowerCase() !== 'chirpy' && i.name.toLowerCase() !== 'landscape'
+    );
+    return [featuredChirpy, featuredLandscape, ...filtered];
   }
 }
 

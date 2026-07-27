@@ -207,6 +207,23 @@ export class ExtensionService {
       }
     }
 
+    // 确保默认官方主题 landscape 始终显示在已安装/可切列表中
+    const hasLandscape = themes.some((t) => t.name.toLowerCase() === 'landscape');
+    if (!hasLandscape) {
+      const nodeModulesLandscape = path.join(blogDir, 'node_modules', 'hexo-theme-landscape');
+      const hasConfig =
+        fs.existsSync(path.join(nodeModulesLandscape, '_config.yml')) ||
+        fs.existsSync(path.join(blogDir, '_config.landscape.yml'));
+      const hasSchema = fs.existsSync(path.join(nodeModulesLandscape, 'theme-schema.yaml'));
+      themes.unshift({
+        name: 'landscape',
+        path: (fs.existsSync(nodeModulesLandscape) ? nodeModulesLandscape : path.join(themesDir, 'landscape')).replace(/\\/g, '/'),
+        isActive: activeTheme === 'landscape',
+        hasConfig,
+        hasSchema,
+      });
+    }
+
     return themes;
   }
 
@@ -381,7 +398,20 @@ export class ExtensionService {
     if (!fs.existsSync(themeDir)) return false;
 
     try {
+      // 1. 物理删除 themes/<themeName> 源码文件夹 (保留根目录下的 _config.<themeName>.yml 主题配置文件)
       fs.rmSync(themeDir, { recursive: true, force: true });
+
+      // 2. 若被删除的主题刚好是当前生效激活的主题，自动平滑切回默认主题 landscape
+      const configPath = path.join(blogDir, '_config.yml');
+      if (fs.existsSync(configPath)) {
+        const raw = fs.readFileSync(configPath, 'utf8');
+        const doc = parseDocument(raw);
+        if (doc.get('theme') === themeName) {
+          doc.set('theme', 'landscape');
+          fs.writeFileSync(configPath, doc.toString(), 'utf8');
+        }
+      }
+
       this.clearHexoCache(blogDir);
       return true;
     } catch {

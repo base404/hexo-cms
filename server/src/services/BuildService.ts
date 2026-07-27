@@ -91,6 +91,17 @@ export class BuildService {
     commitMsg: string = 'Site updated via Hexo Web GUI',
     onLog: (data: string) => void
   ): Promise<void> {
+    const gitDir = path.join(blogDir, '.git');
+    if (!fs.existsSync(gitDir)) {
+      onLog(`\n❌ [ERROR] 当前博客目录未初始化 Git 仓库 (找不到 .git 文件夹)！\n`);
+      onLog(`💡 解决方法:\n`);
+      onLog(`   1. 打开终端进入博客目录: cd "${blogDir}"\n`);
+      onLog(`   2. 初始化 Git: git init\n`);
+      onLog(`   3. 绑定远程仓库: git remote add origin https://github.com/your-username/your-repo.git\n`);
+      onLog(`   4. 设置默认分支: git branch -M main\n`);
+      throw new Error(`当前博客路径 (${blogDir}) 未初始化 Git 仓库，无法执行 Git 推送`);
+    }
+
     const runCommand = (cmd: string, args: string[]): Promise<void> => {
       return new Promise((resolve, reject) => {
         onLog(`\n💻 执行命令: ${cmd} ${args.join(' ')}\n`);
@@ -112,7 +123,7 @@ export class BuildService {
           if (code === 0) {
             resolve();
           } else {
-            reject(new Error(`Command "${cmd} ${args.join(' ')}" failed with code ${code}`));
+            reject(new Error(`命令 "${cmd} ${args.join(' ')}" 执行失败 (退出码: ${code})`));
           }
         });
 
@@ -120,17 +131,30 @@ export class BuildService {
       });
     };
 
-    onLog(`🚀 启动 Git 一键一键部署与推流流程...\n`);
+    onLog(`🚀 启动 Git 一键部署与推送流程...\n`);
     onLog(`📁 提交目录: ${blogDir}\n`);
 
     try {
       const gitCmd = process.platform === 'win32' ? 'git.exe' : 'git';
       await runCommand(gitCmd, ['add', '.']);
-      await runCommand(gitCmd, ['commit', '-m', `"${commitMsg}"`]);
-      await runCommand(gitCmd, ['push']);
-      onLog(`\n✅ [SUCCESS] Git 变更打包推送成功！已推送至远端仓库。`);
+      
+      // 允许 commit 在无改动时失败但不阻塞后续（或附带 --allow-empty）
+      try {
+        await runCommand(gitCmd, ['commit', '-m', `"${commitMsg}"`]);
+      } catch (commitErr: any) {
+        onLog(`ℹ️ [Commit Notice] ${commitErr.message} (可能无新文件变动，继续推送)\n`);
+      }
+
+      // 优先使用 -u origin main 自动建立上游分支跟踪，解决无 upstream branch 的阻断报错
+      try {
+        await runCommand(gitCmd, ['push', '-u', 'origin', 'main']);
+      } catch {
+        await runCommand(gitCmd, ['push']);
+      }
+      onLog(`\n✅ [SUCCESS] Git 变更打包推送成功！已推送至 GitHub / 远端仓库。`);
     } catch (e: any) {
-      onLog(`\n⚠️ Git 推送过程提示: ${e.message}`);
+      onLog(`\n❌ [ERROR] Git 部署过程异常终止: ${e.message}\n`);
+      throw e; // 向上抛出异常，让后端 API 返回错误状态码与 Toast
     }
   }
 }

@@ -175,13 +175,14 @@ export const PostListManager: React.FC<PostListManagerProps> = ({
           {filteredPosts.map((post) => (
             <div
               key={post.filename}
-              className="geist-card p-5 flex flex-col justify-between space-y-4 hover:border-gray-300 transition-colors"
+              onClick={() => onEditPost(post)}
+              className="geist-card p-5 flex flex-col justify-between space-y-4 hover:border-zinc-400 hover:shadow-sm transition-all cursor-pointer group"
             >
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-vercel-blue shrink-0" />
-                    <h3 className="font-medium text-sm text-vercel-black line-clamp-1">
+                    <FileText className="w-4 h-4 text-vercel-blue shrink-0 group-hover:scale-110 transition-transform" />
+                    <h3 className="font-medium text-sm text-vercel-black line-clamp-1 group-hover:text-vercel-blue transition-colors">
                       {post.title}
                     </h3>
                   </div>
@@ -228,14 +229,20 @@ export const PostListManager: React.FC<PostListManagerProps> = ({
 
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => onEditPost(post)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditPost(post);
+                    }}
                     className="btn-secondary text-xs px-3 py-1 flex items-center gap-1 hover:bg-zinc-100"
                   >
                     <Edit3 className="w-3.5 h-3.5 text-vercel-blue" />
                     编辑
                   </button>
                   <button
-                    onClick={() => handleDelete(post)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(post);
+                    }}
                     className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors"
                     title="安全物理删除文章"
                   >
