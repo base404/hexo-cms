@@ -195,7 +195,9 @@ export class ExtensionService {
           const hasConfig =
             fs.existsSync(path.join(fullPath, '_config.yml')) ||
             fs.existsSync(path.join(blogDir, `_config.${d}.yml`));
-          const hasSchema = fs.existsSync(path.join(fullPath, 'theme-schema.yaml'));
+          const hasSchema =
+            fs.existsSync(fullPath) &&
+            fs.readdirSync(fullPath).some((f) => /^theme-schema.*\.ya?ml$/i.test(f));
           themes.push({
             name: d,
             path: fullPath.replace(/\\/g, '/'),
@@ -214,7 +216,9 @@ export class ExtensionService {
       const hasConfig =
         fs.existsSync(path.join(nodeModulesLandscape, '_config.yml')) ||
         fs.existsSync(path.join(blogDir, '_config.landscape.yml'));
-      const hasSchema = fs.existsSync(path.join(nodeModulesLandscape, 'theme-schema.yaml'));
+      const hasSchema =
+        fs.existsSync(nodeModulesLandscape) &&
+        fs.readdirSync(nodeModulesLandscape).some((f) => /^theme-schema.*\.ya?ml$/i.test(f));
       themes.unshift({
         name: 'landscape',
         path: (fs.existsSync(nodeModulesLandscape) ? nodeModulesLandscape : path.join(themesDir, 'landscape')).replace(/\\/g, '/'),
@@ -227,8 +231,47 @@ export class ExtensionService {
     return themes;
   }
 
-  getThemeSchema(blogDir: string, themeName: string): ThemeSchema | null {
-    const schemaPath = path.join(blogDir, 'themes', themeName, 'theme-schema.yaml');
+  getAvailableThemeSchemas(blogDir: string, themeName: string): { lang: string; label: string; file: string }[] {
+    const themeDir = path.join(blogDir, 'themes', themeName);
+    if (!fs.existsSync(themeDir)) return [];
+
+    try {
+      const files = fs.readdirSync(themeDir);
+      const schemaFiles = files.filter((f) => /^theme-schema.*\.ya?ml$/i.test(f));
+
+      return schemaFiles.map((file) => {
+        if (file === 'theme-schema.yaml' || file === 'theme-schema.yml') {
+          return { lang: 'en', label: 'English (Default)', file };
+        }
+        const match = file.match(/^theme-schema_(.+)\.ya?ml$/i);
+        const lang = match ? match[1] : file;
+        return { lang, label: lang, file };
+      });
+    } catch {
+      return [];
+    }
+  }
+
+  getThemeSchema(blogDir: string, themeName: string, langOrFile?: string): ThemeSchema | null {
+    const themeDir = path.join(blogDir, 'themes', themeName);
+    if (!fs.existsSync(themeDir)) return null;
+
+    let targetFile = 'theme-schema.yaml';
+
+    if (langOrFile) {
+      if (fs.existsSync(path.join(themeDir, langOrFile))) {
+        targetFile = langOrFile;
+      } else if (fs.existsSync(path.join(themeDir, `theme-schema_${langOrFile}.yaml`))) {
+        targetFile = `theme-schema_${langOrFile}.yaml`;
+      } else if (fs.existsSync(path.join(themeDir, `theme-schema_${langOrFile}.yml`))) {
+        targetFile = `theme-schema_${langOrFile}.yml`;
+      }
+    }
+
+    let schemaPath = path.join(themeDir, targetFile);
+    if (!fs.existsSync(schemaPath)) {
+      schemaPath = path.join(themeDir, 'theme-schema.yaml');
+    }
     if (!fs.existsSync(schemaPath)) return null;
 
     try {
@@ -241,6 +284,7 @@ export class ExtensionService {
       return null;
     }
   }
+
 
   getThemeConfig(blogDir: string, themeName: string): Record<string, any> {
     const baseConfigPath = path.join(blogDir, 'themes', themeName, '_config.yml');

@@ -470,10 +470,13 @@ apiRouter.post('/themes/delete', (req, res) => {
 // 7.1 主题 Schema 与可视化配置接口
 apiRouter.get('/themes/:name/schema', (req, res) => {
   const { name } = req.params;
+  const lang = req.query.lang as string | undefined;
   const blogDir = getActiveBlogDir();
-  const schema = extensionService.getThemeSchema(blogDir, name);
-  return res.json({ schema });
+  const availableSchemas = extensionService.getAvailableThemeSchemas(blogDir, name);
+  const schema = extensionService.getThemeSchema(blogDir, name, lang);
+  return res.json({ schema, availableSchemas });
 });
+
 
 apiRouter.get('/themes/:name/config', (req, res) => {
   const { name } = req.params;

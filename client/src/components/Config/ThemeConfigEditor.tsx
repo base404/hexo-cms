@@ -108,16 +108,19 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
   const [saving, setSaving] = useState(false);
   const [restarting, setRestarting] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+  const [availableSchemas, setAvailableSchemas] = useState<{ lang: string; label: string; file: string }[]>([]);
+  const [selectedLang, setSelectedLang] = useState<string>('');
 
   useEffect(() => {
     loadSchemaAndConfig();
   }, [themeName]);
 
-  const loadSchemaAndConfig = async () => {
+  const loadSchemaAndConfig = async (langParam?: string) => {
     setLoading(true);
     try {
+      const url = `/api/themes/${themeName}/schema${langParam ? `?lang=${encodeURIComponent(langParam)}` : ''}`;
       const [schemaRes, configRes] = await Promise.all([
-        fetch(`/api/themes/${themeName}/schema`),
+        fetch(url),
         fetch(`/api/themes/${themeName}/config`),
       ]);
 
@@ -126,6 +129,12 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
         const data = await schemaRes.json();
         schemaData = data.schema;
         setSchema(schemaData);
+        if (data.availableSchemas) {
+          setAvailableSchemas(data.availableSchemas);
+          if (!selectedLang && data.availableSchemas.length > 0) {
+            setSelectedLang(data.availableSchemas[0].lang);
+          }
+        }
       }
 
       let configData: Record<string, any> = {};
@@ -154,9 +163,28 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
     }
   };
 
+  const handleLanguageChange = async (lang: string) => {
+    setSelectedLang(lang);
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/themes/${themeName}/schema?lang=${encodeURIComponent(lang)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.schema) {
+          setSchema(data.schema);
+        }
+      }
+    } catch (e: any) {
+      showToast(`切换 Schema 语言失败: ${e.message}`, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleFieldChange = (fieldName: string, value: any) => {
     setFormData((prev) => setValueByPath(prev, fieldName, value));
   };
+
 
   const toggleGroupCollapse = (groupId: string) => {
     setCollapsedGroups((prev) => ({
@@ -574,8 +602,26 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
+            {availableSchemas.length > 1 && (
+              <div className="flex items-center gap-1.5 text-xs text-zinc-600 bg-white border border-zinc-200 px-2.5 py-1 rounded-[6px] shadow-2xs mr-1">
+                <Globe className="w-3.5 h-3.5 text-indigo-500" />
+                <span className="text-zinc-500 font-mono">Schema 语言:</span>
+                <select
+                  value={selectedLang}
+                  onChange={(e) => handleLanguageChange(e.target.value)}
+                  className="bg-transparent text-zinc-900 font-medium focus:outline-none cursor-pointer"
+                >
+                  {availableSchemas.map((item) => (
+                    <option key={item.file} value={item.lang}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             {isDirty && (
               <button
+
                 onClick={handleReset}
                 className="px-3 py-1.5 text-xs font-mono text-zinc-600 hover:text-zinc-900 border border-zinc-200 rounded-[6px] hover:bg-zinc-100 transition-colors flex items-center gap-1.5"
               >
