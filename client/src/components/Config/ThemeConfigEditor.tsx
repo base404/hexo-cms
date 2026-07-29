@@ -603,13 +603,13 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
 
           <div className="flex items-center gap-2">
             {availableSchemas.length > 1 && (
-              <div className="flex items-center gap-1.5 text-xs text-zinc-600 bg-white border border-zinc-200 px-2.5 py-1 rounded-[6px] shadow-2xs mr-1">
-                <Globe className="w-3.5 h-3.5 text-indigo-500" />
-                <span className="text-zinc-500 font-mono">Schema 语言:</span>
+              <div className="flex items-center gap-1.5 text-xs bg-white border border-indigo-200 text-indigo-900 px-3 py-1.5 rounded-[6px] shadow-xs mr-2 ring-2 ring-indigo-50/50">
+                <Globe className="w-3.5 h-3.5 text-indigo-600 animate-pulse" />
+                <span className="text-zinc-600 font-mono font-medium">Schema 界面语言:</span>
                 <select
                   value={selectedLang}
                   onChange={(e) => handleLanguageChange(e.target.value)}
-                  className="bg-transparent text-zinc-900 font-medium focus:outline-none cursor-pointer"
+                  className="bg-transparent text-indigo-950 font-bold focus:outline-none cursor-pointer underline decoration-indigo-300 underline-offset-2"
                 >
                   {availableSchemas.map((item) => (
                     <option key={item.file} value={item.lang}>
@@ -621,6 +621,7 @@ export const ThemeConfigEditor: React.FC<ThemeConfigEditorProps> = ({
             )}
             {isDirty && (
               <button
+
 
                 onClick={handleReset}
                 className="px-3 py-1.5 text-xs font-mono text-zinc-600 hover:text-zinc-900 border border-zinc-200 rounded-[6px] hover:bg-zinc-100 transition-colors flex items-center gap-1.5"
