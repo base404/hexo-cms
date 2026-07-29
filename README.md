@@ -38,7 +38,7 @@
   <br /><br />
 
   <p align="center">
-    <a href="#-特性亮点-key-features"><b>特性亮点</b></a> &nbsp;•&nbsp;
+    <a href="#-功能列表-features-list"><b>功能列表</b></a> &nbsp;•&nbsp;
     <a href="#-快速开始-quick-start"><b>快速开始</b></a> &nbsp;•&nbsp;
     <a href="#-核心架构-architecture"><b>核心架构</b></a> &nbsp;•&nbsp;
     <a href="#-技术栈-tech-stack"><b>技术栈</b></a> &nbsp;•&nbsp;
@@ -59,66 +59,34 @@
 
 <br />
 
-## ✨ 特性亮点 (Key Features)
+## ✨ 功能列表 (Features List)
 
-<table>
-  <tr>
-    <td width="50%" valign="top">
-      <h3>🎛️ Theme Schema 可视化配置协议与多语言 (i18n)</h3>
-      <ul>
-        <li><b>自动 Schema 解析</b>：读取主题 <code>theme-schema.yaml</code> / <code>theme-schema_汉语.yaml</code> 自动生成图形配置面板。</li>
-        <li><b>多语言动态切换 (Schema i18n)</b>：支持主题内多 Schema 文件扫描，顶栏下拉菜单一键切换配置界面语言。</li>
-        <li><b>Tag Pills & Object Cards</b>：可视化管理技能胶囊标签（Skills）与友情链接（Friends）复杂对象列表。</li>
-        <li><b>无损 YAML 注释保持</b>：采用 AST 语法树解析与保存 <code>_config.yml</code>，完全保留注释与原有格式。</li>
-      </ul>
-    </td>
-    <td width="50%" valign="top">
-      <h3>✍️ 智能编辑器与拖拽解析 (Smart Editor)</h3>
-      <ul>
-        <li><b>H1 标题自动提取</b>：拖入 Markdown 文件时自动识别首行 <code># Title</code> 提取为文章标题。</li>
-        <li><b>防闪烁平滑拖拽</b>：内置防抖 Drag Counter 机制，支持全局文件拖拽放开解析。</li>
-        <li><b>同屏分屏实时预览</b>：Split-view 交互体验，结合 Front-matter 抽屉面板。</li>
-        <li><b>物理磁盘锁</b>：实时感知外部 mtime 修改，有效规避多端写入覆盖冲突。</li>
-      </ul>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
-      <h3>📱 全响应式极客设计 (Geist UI System)</h3>
-      <ul>
-        <li><b>Vercel Design 美学</b>：深黑黑客质感、极简线条、优雅微动画与层级 Toast 层。</li>
-        <li><b>小屏与移动端抗挤压</b>：顶栏 Tab 自适应横向滑动，保护工具栏文字与按钮完整性。</li>
-        <li><b>响应式管理视图</b>：无论是桌面高分辨率屏，还是 Tablet/Mobile 均能流畅操控。</li>
-      </ul>
-    </td>
-    <td width="50%" valign="top">
-      <h3>🧩 主题与插件市场 CRUD (Marketplace)</h3>
-      <ul>
-        <li><b>官方 API 动态同步</b>：实时对接 hexo.io 提取热门插件与主题列表。</li>
-        <li><b>一键下载与自动解绑</b>：全自动 Git Clone 关联主题，强行自动解绑主题遗留的 <code>.git</code> 目录，防止 Git Submodule 故障。</li>
-        <li><b>自动拉取更新</b>：已安装卡片自带【更新】按钮，后台流式 Git Pull 覆盖更新。</li>
-      </ul>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
-      <h3>🖥️ 预览服务与一键构建部署 (Build & Deploy)</h3>
-      <ul>
-        <li><b>Hexo Server 进程掌控</b>：实时【启动】/【停止】/【重启】<code>hexo server</code> (:4000)。</li>
-        <li><b>一键 Hexo 编译与清理</b>：快捷触发 <code>hexo g</code> 与 <code>hexo clean</code> 清理任务。</li>
-        <li><b>Git Commit & Push</b>：打包后一键推送生成静态资产至 GitHub / Gitee 远程仓库。</li>
-      </ul>
-    </td>
-    <td width="50%" valign="top">
-      <h3>🔮 系统配置中心 & 代码注入 (Custom Injector)</h3>
-      <ul>
-        <li><b>全局 <code>_config.yml</code> 管理</b>：图形化修改 Hexo 全局参数。</li>
-        <li><b>自定义 JS/CSS 代码注入</b>：可视化编辑样式与扩展脚本，通过主题 Injector 注入。</li>
-        <li><b>免配置开箱即用</b>：全功能打包为 Node.js SEA 可执行应用程序。</li>
-      </ul>
-    </td>
-  </tr>
-</table>
+- 🎛️ **Theme Schema 可视化配置引擎与多语言 (i18n)**
+  - **自动 Schema 解析**：动态扫描读取主题 `theme-schema.yaml` / `theme-schema_汉语.yaml` 自动生成图形配置表单；
+  - **多语言动态切换 (Schema i18n)**：在配置弹窗顶栏下拉菜单中实时切换配置界面语言（如汉语 / English）；
+  - **Tag Pills & Object Cards**：可视化管理技能胶囊标签（Skills）与友情链接（Friends）等复杂对象列表。
+- ✍️ **智能 Markdown 编辑器与 H1 标题提取 (Smart Editor)**
+  - **H1 标题自动识别提取**：拖入 Markdown 文件时自动识别首行 `# Title` 提取为文章标题；
+  - **防闪烁平滑拖拽**：内置防抖 Drag Counter 机制，支持全局文件平滑拖放解析；
+  - **同屏分屏实时预览**：Split-View 交互体验，结合 Front-matter 抽屉面板；
+  - **物理磁盘锁**：实时感知物理 mtime 修改，有效规避多端写入覆盖冲突。
+- 📱 **全响应式极客设计 (Vercel Geist Design System)**
+  - **Vercel Geist 美学**：深黑黑客质感、极简线条、优雅微动画与高优先级 Portal Toast 层；
+  - **小屏与移动端抗挤压**：顶栏 Tab 自适应横向滑动，保护工具栏文字与按钮完整性，自适应 Tablet/Mobile。
+- 🧩 **主题与插件市场一键 CRUD (Marketplace)**
+  - **官方 API 动态同步**：实时对接 hexo.io 官方 API 提取热门插件与主题列表；
+  - **一键下载与自动解绑**：自动 Git Clone 关联主题，强行自动解绑主题遗留的 `.git` 目录，防止 Git Submodule 故障；
+  - **自动拉取更新**：已安装主题卡片自带【更新】按钮，后台流式 Git Pull 覆盖更新。
+- 🖥️ **Hexo 预览服务与一键编译部署 (Build & Deploy)**
+  - **Hexo Server 进程掌控**：实时【启动】/【停止】/【重启】`hexo server` (:4000)；
+  - **一键 Hexo 编译与清理**：快捷触发 `hexo g` 与 `hexo clean` 清理任务；
+  - **Git Commit & Push**：打包后一键推送静态生成资产至 GitHub / Gitee 远程仓库。
+- 🔮 **系统配置中心 & 代码注入 (Custom Code Injector)**
+  - **YAML AST 原生解析**：基于 AST 语法树解析与保存 `_config.yml`，完全保留注释与原有格式；
+  - **自定义 JS/CSS 代码注入**：可视化编辑样式与扩展脚本，通过主题 Injector 注入。
+- 🚀 **免配置单二进制开箱即用 (Node.js SEA & Docker)**
+  - **单文件执行档**：支持打包导出为免 Node.js 环境的单二进制独立运行包 (`hexo-cms.exe` / `./hexo-cms`)；
+  - **Docker 部署**：提供标准的 Docker 与 Docker-Compose 构建方案，开箱即用。
 
 <br />
 
