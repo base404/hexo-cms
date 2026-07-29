@@ -5,10 +5,41 @@ import { execSync } from 'child_process';
 const OWNER = 'base404';
 const REPO = 'hexo-cms';
 const TAG = '3.0';
-const TOKEN = process.env.GITHUB_TOKEN;
+
+function getGitHubToken() {
+  const envToken = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+  if (envToken && !envToken.includes('dummy')) {
+    return envToken;
+  }
+
+  try {
+    console.log('🔑 正在从 Git 凭据管理器获取真实的 GitHub Token...');
+    const result = execSync('git credential fill', {
+      input: 'protocol=https\nhost=github.com\n\n',
+      stdio: ['pipe', 'pipe', 'ignore']
+    }).toString();
+    
+    const lines = result.split('\n');
+    for (const line of lines) {
+      if (line.startsWith('password=')) {
+        const token = line.substring('password='.length).trim();
+        if (token) {
+          console.log('   ✅ 成功获取 GitHub 凭据。');
+          return token;
+        }
+      }
+    }
+  } catch (err) {
+    console.log('   无法通过 Git 凭据管理器获取。', err.message);
+  }
+
+  return envToken;
+}
+
+const TOKEN = getGitHubToken();
 
 if (!TOKEN) {
-  console.error('❌ 错误: 找不到 GITHUB_TOKEN 环境变量！');
+  console.error('❌ 错误: 找不到有效的 GitHub Token！');
   process.exit(1);
 }
 

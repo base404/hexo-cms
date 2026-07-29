@@ -1,9 +1,7 @@
 <div align="center">
 
   <br />
-  <div style="background: #171717; width: 88px; height: 88px; border-radius: 20px; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 16px 36px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.1);">
-    <h1 style="color: #ffffff; font-size: 48px; margin: 0; padding: 0; line-height: 1;">▲</h1>
-  </div>
+  <img src="./client/public/logo.png" width="88" height="88" style="border-radius: 20px; box-shadow: 0 16px 36px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.1);" alt="Hexo CMS Logo" />
 
   <h1 align="center" style="font-size: 2.25rem; font-weight: 800; letter-spacing: -0.025em; margin-top: 16px; margin-bottom: 8px;">Hexo CMS</h1>
 
