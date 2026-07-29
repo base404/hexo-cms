@@ -32,3 +32,6 @@ config.json
 # Release packaging
 release-pkgs/
 
+# AI & Agent Skills
+.agents/
+.gemini/
