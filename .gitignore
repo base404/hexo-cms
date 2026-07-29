@@ -31,6 +31,7 @@ config.json
 
 # Release packaging
 release-pkgs/
+node-linux.tar.xz
 
 # AI & Agent Skills
 .agents/

@@ -62,7 +62,7 @@ async function main() {
   const linuxDir = path.join(releaseDir, 'hexo-cms-linux-x64');
   fs.mkdirSync(linuxDir, { recursive: true });
 
-  const tmpLinuxTar = path.join(releaseDir, 'node-linux.tar.xz');
+  const tmpLinuxTar = path.join(process.cwd(), 'node-linux.tar.xz');
   const nodeLinuxUrl = 'https://nodejs.org/dist/v20.18.0/node-v20.18.0-linux-x64.tar.xz';
   
   console.log(`   正在从 Node.js 官方获取 Linux 二进制底座 (${nodeLinuxUrl})...`);

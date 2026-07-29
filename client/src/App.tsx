@@ -238,9 +238,11 @@ const MainApp: React.FC = () => {
               className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity shrink-0"
               title="回到首页 (文章管理)"
             >
-              <div className="w-5 h-5 bg-vercel-black rounded-sm flex items-center justify-center text-white font-bold text-xs shadow-xs">
-                ▲
-              </div>
+              <img
+                src="/logo.png"
+                alt="Hexo CMS"
+                className="w-5 h-5 rounded-sm shadow-xs object-cover"
+              />
               <span className="font-semibold text-sm tracking-tight text-vercel-black whitespace-nowrap">Hexo CMS</span>
             </div>
 
