@@ -383,6 +383,34 @@ export class ExtensionService {
 
       child.on('close', (code) => {
         if (code === 0) {
+          // 清理子主题目录中的 .git 文件夹，防止 GitHub 提交被阻断为 submodule
+          const subGit = path.join(targetPath, '.git');
+          if (fs.existsSync(subGit)) {
+            try {
+              fs.rmSync(subGit, { recursive: true, force: true });
+              onLog(`🧹 已自动解绑主题内部 .git 文件夹，确保主题代码可完整 Commit/Push 推送到 GitHub 主仓库！\n`);
+            } catch (e: any) {
+              onLog(`⚠️ 清理 .git 目录异常: ${e.message}\n`);
+            }
+          }
+
+          // 保存主题元信息
+          const metaPath = path.join(targetPath, 'theme-meta.json');
+          try {
+            fs.writeFileSync(
+              metaPath,
+              JSON.stringify(
+                {
+                  repositoryUrl: cleanUrl,
+                  installedAt: new Date().toISOString(),
+                },
+                null,
+                2
+              ),
+              'utf8'
+            );
+          } catch {}
+
           onLog(`\n✅ 主题 ${themeName} 克隆成功！已保存至 themes/${themeName}\n`);
           resolve();
         } else {
@@ -392,6 +420,100 @@ export class ExtensionService {
       });
     });
   }
+
+  updateTheme(
+    blogDir: string,
+    themeName: string,
+    repositoryUrl: string | undefined,
+    onLog: (data: string) => void
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const targetPath = path.join(blogDir, 'themes', themeName);
+      const metaPath = path.join(targetPath, 'theme-meta.json');
+
+      let finalUrl = repositoryUrl;
+      if (!finalUrl && fs.existsSync(metaPath)) {
+        try {
+          const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+          finalUrl = meta.repositoryUrl;
+        } catch {}
+      }
+
+      if (!finalUrl) {
+        onLog(`❌ 无法获取主题 ${themeName} 的 Git 仓库地址，请手动指定 Repository URL。\n`);
+        return reject(new Error(`Missing repository URL for theme ${themeName}`));
+      }
+
+      const cleanUrl = finalUrl.endsWith('.git') ? finalUrl : `${finalUrl}.git`;
+      const tempDir = path.join(blogDir, '.tmp-theme-update', themeName);
+
+      if (fs.existsSync(tempDir)) {
+        fs.rmSync(tempDir, { recursive: true, force: true });
+      }
+      fs.mkdirSync(tempDir, { recursive: true });
+
+      const isWindows = process.platform === 'win32';
+      const cmd = isWindows ? 'git.exe' : 'git';
+      const args = ['clone', '--progress', cleanUrl, tempDir];
+
+      onLog(`🚀 开始从远程仓库拉取最新主题代码 (${themeName})...\n`);
+      onLog(`仓库地址: ${cleanUrl}\n`);
+      onLog(`执行命令: git clone --progress ${cleanUrl} .tmp-theme-update/${themeName}\n\n`);
+
+      const child = spawn(cmd, args, { shell: true });
+
+      child.stdout?.on('data', (chunk) => onLog(chunk.toString()));
+      child.stderr?.on('data', (chunk) => onLog(chunk.toString()));
+
+      child.on('close', (code) => {
+        if (code === 0) {
+          try {
+            onLog(`\n📦 正在覆盖并更新本地主题目录 themes/${themeName}...\n`);
+            if (!fs.existsSync(targetPath)) {
+              fs.mkdirSync(targetPath, { recursive: true });
+            }
+
+            // 拷贝最新主题代码至 themes/<themeName>
+            fs.cpSync(tempDir, targetPath, { recursive: true, force: true });
+
+            // 移除临时目录
+            fs.rmSync(path.join(blogDir, '.tmp-theme-update'), { recursive: true, force: true });
+
+            // 清理 themes/<themeName> 中的 .git 目录
+            const subGit = path.join(targetPath, '.git');
+            if (fs.existsSync(subGit)) {
+              fs.rmSync(subGit, { recursive: true, force: true });
+            }
+
+            // 保存/更新元信息
+            fs.writeFileSync(
+              metaPath,
+              JSON.stringify(
+                {
+                  repositoryUrl: cleanUrl,
+                  updatedAt: new Date().toISOString(),
+                },
+                null,
+                2
+              ),
+              'utf8'
+            );
+
+            this.clearHexoCache(blogDir);
+            onLog(`\n✅ 主题 ${themeName} 已成功自动拉取并更新至最新版本！\n`);
+            resolve();
+          } catch (err: any) {
+            onLog(`\n❌ 覆盖更新主题文件出错: ${err.message}\n`);
+            reject(err);
+          }
+        } else {
+          onLog(`\n❌ 拉取主题更新失败，退出码: ${code}\n`);
+          reject(new Error(`Git clone failed with exit code ${code}`));
+        }
+      });
+    });
+  }
+
 
   deleteTheme(blogDir: string, themeName: string): boolean {
     const themeDir = path.join(blogDir, 'themes', themeName);

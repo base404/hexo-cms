@@ -138,6 +138,56 @@ export const ThemeMarket: React.FC = () => {
     }
   };
 
+  const handleUpdateTheme = async (name: string, repositoryUrl?: string) => {
+    setConsoleModal({
+      show: true,
+      title: `拉取最新主题代码: ${name}`,
+      logs: `🚀 正在连接后台发起 Git 拉取/更新主题任务...\n`,
+      isFinished: false,
+      isError: false,
+    });
+
+    try {
+      const response = await fetch('/api/themes/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, repositoryUrl }),
+      });
+
+      if (!response.body) throw new Error('ReadableStream not supported');
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const text = decoder.decode(value, { stream: true });
+        setConsoleModal((prev) => ({
+          ...prev,
+          logs: prev.logs + text,
+        }));
+      }
+
+      setConsoleModal((prev) => ({
+        ...prev,
+        isFinished: true,
+        isError: false,
+      }));
+      showToast(`主题《${name}》已成功自动拉取并更新至最新版本！`, 'success', '主题更新成功');
+      fetchInstalledThemes();
+    } catch (e: any) {
+      setConsoleModal((prev) => ({
+        ...prev,
+        logs: prev.logs + `\n❌ 更新主题异常: ${e.message}`,
+        isFinished: true,
+        isError: true,
+      }));
+      showToast(`主题《${name}》更新过程发生错误，详见日志`, 'error', '主题更新失败');
+    }
+  };
+
+
   const handleActivateTheme = async (name: string) => {
     try {
       const res = await fetch('/api/themes/activate', {
@@ -339,20 +389,29 @@ export const ThemeMarket: React.FC = () => {
                       {installedInfo.hasSchema && (
                         <button
                           onClick={() => setEditingThemeConfig(theme.name)}
-                          className="bg-white border border-zinc-200 hover:bg-zinc-50 text-[#171717] text-xs py-1.5 px-3 flex items-center justify-center gap-1.5 font-medium rounded-[6px] shadow-2xs transition-colors shrink-0"
+                          className="bg-white border border-zinc-200 hover:bg-zinc-50 text-[#171717] text-xs py-1.5 px-2.5 flex items-center justify-center gap-1 font-medium rounded-[6px] shadow-2xs transition-colors shrink-0"
                           title="可视化配置主题 Schema"
                         >
                           <Sliders className="w-3.5 h-3.5 text-zinc-700" />
-                          配置 Schema
+                          配置
                         </button>
                       )}
+
+                      <button
+                        onClick={() => handleUpdateTheme(theme.name, theme.link)}
+                        className="bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-700 text-xs py-1.5 px-2.5 flex items-center justify-center gap-1 font-medium rounded-[6px] shadow-2xs transition-colors shrink-0"
+                        title="自动拉取最新主题代码并升级"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5 text-zinc-600" />
+                        更新
+                      </button>
 
                       {!isActive ? (
                         <button
                           onClick={() => handleActivateTheme(theme.name)}
                           className="btn-primary-pill text-xs flex-1 py-1.5 flex items-center justify-center gap-1 bg-[#171717] hover:bg-black text-white font-medium rounded-[6px]"
                         >
-                          <Play className="w-3.5 h-3.5" /> 启用该主题
+                          <Play className="w-3.5 h-3.5" /> 启用
                         </button>
                       ) : (
                         <span className="text-xs text-[#00C853] font-mono font-semibold flex-1 text-center py-1.5 bg-emerald-50 rounded-[6px] border border-emerald-200">
@@ -363,7 +422,7 @@ export const ThemeMarket: React.FC = () => {
                       {!isActive && theme.name.toLowerCase() !== 'landscape' && (
                         <button
                           onClick={() => handleDeleteTheme(theme.name)}
-                          className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-[6px] transition-colors"
+                          className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-[6px] transition-colors shrink-0"
                           title="删除主题目录"
                         >
                           <Trash2 className="w-4 h-4" />

@@ -415,6 +415,32 @@ apiRouter.post('/themes/install', (req, res) => {
     });
 });
 
+apiRouter.post('/themes/update', (req, res) => {
+  const { name, repositoryUrl } = req.body;
+  if (!name) {
+    return res.status(400).json({ error: 'Theme name required' });
+  }
+
+  const blogDir = getActiveBlogDir();
+
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.setHeader('Transfer-Encoding', 'chunked');
+
+  extensionService
+    .updateTheme(blogDir, name, repositoryUrl, (log) => {
+      res.write(log);
+    })
+    .then(() => {
+      res.write('\n[DONE] Theme Update Completed.');
+      res.end();
+    })
+    .catch((err) => {
+      res.write(`\n[ERROR] ${err.message}`);
+      res.end();
+    });
+});
+
+
 apiRouter.post('/themes/activate', (req, res) => {
   const { name } = req.body;
   if (!name) return res.status(400).json({ error: 'Theme name required' });

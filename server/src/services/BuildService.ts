@@ -135,8 +135,26 @@ export class BuildService {
     onLog(`📁 提交目录: ${blogDir}\n`);
 
     try {
+      // 部署前自动解绑 themes/ 目录下主题自带的 .git 目录，防止 GitHub 提交被阻断为 submodule
+      const themesDir = path.join(blogDir, 'themes');
+      if (fs.existsSync(themesDir)) {
+        const themeFolders = fs.readdirSync(themesDir);
+        for (const folder of themeFolders) {
+          const subGit = path.join(themesDir, folder, '.git');
+          if (fs.existsSync(subGit)) {
+            try {
+              fs.rmSync(subGit, { recursive: true, force: true });
+              onLog(`🧹 [Auto Cleanup] 自动解绑 themes/${folder} 内的 .git 目录，确保主题能作为普通代码文件完整推送至 GitHub\n`);
+            } catch (e: any) {
+              onLog(`⚠️ [Auto Cleanup Warn] 清理 themes/${folder}/.git 异常: ${e.message}\n`);
+            }
+          }
+        }
+      }
+
       const gitCmd = process.platform === 'win32' ? 'git.exe' : 'git';
       await runCommand(gitCmd, ['add', '.']);
+
       
       // 允许 commit 在无改动时失败但不阻塞后续（或附带 --allow-empty）
       try {
